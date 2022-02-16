@@ -134,3 +134,8 @@ resource sqlprivateEndpointDnsZoneGroup 'Microsoft.Network/privateEndpoints/priv
     ]
   }
 }
+
+// Outputs
+//////////////////////////////////////////////////
+@description('The FQDN of the SQL Server.')
+output sqlServerFQDN string = sqlServer.properties.fullyQualifiedDomainName

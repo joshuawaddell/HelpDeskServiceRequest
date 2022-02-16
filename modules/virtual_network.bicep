@@ -6,6 +6,12 @@ param applicationGatewaySubnetName string
 @description('The address prefix of the Application Gateway Subnet.')
 param applicationGatewaySubnetPrefix string
 
+@description('The name of the Container Instance Subnet.')
+param containerInstanceSubnetName string
+
+@description('The address prefix of the Container Instance Subnet.')
+param containerInstanceSubnetPrefix string
+
 @description('The location for all resources.')
 param location string
 
@@ -55,11 +61,6 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
         name: applicationGatewaySubnetName
         properties: {
           addressPrefix: applicationGatewaySubnetPrefix
-          serviceEndpoints: [
-            {
-              service: 'Microsoft.Web'
-            }
-          ]
         }
       }
       {
@@ -81,6 +82,12 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
               }
             }
           ]
+        }
+      }
+      {
+        name: containerInstanceSubnetName
+        properties: {
+          addressPrefix: containerInstanceSubnetPrefix
         }
       }
     ]
@@ -120,3 +127,6 @@ output privateEndpointSubnetId string = virtualNetwork.properties.subnets[1].id
 
 @description('The resource ID of the Virtual Network.')
 output virtualNetworkId string = virtualNetwork.id
+
+@description('The resource ID of the VNET Integration subnet.')
+output vnetIntegrationSubnetId string = virtualNetwork.properties.subnets[2].id

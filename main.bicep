@@ -1,8 +1,5 @@
 // Parameters
 //////////////////////////////////////////////////
-@description('The password of the admin user.')
-param adminPassword string
-
 @description('The name of the admin user.')
 param adminUserName string
 
@@ -17,35 +14,35 @@ param workload string = 'cop2940'
 
 // Global Variables
 //////////////////////////////////////////////////
-// Resources
-// Log Analytics
-var logAnalyticsWorkspaceName = 'log-${workload}-${azureRegion}-001'
-
-// Application Insights
-var applicationInsightsName = 'appinsights-${workload}-${azureRegion}-001'
-
-// Virtual Network
 var applicationGatewaySubnetName = 'snet-${workload}-${azureRegion}-applicationGateway'
 var applicationGatewaySubnetPrefix = '10.0.0.0/24'
+var applicationInsightsName = 'appinsights-${workload}-${azureRegion}-001'
+var appServiceName = 'app-${workload}-${azureRegion}-001'
+var appServicePlanName = 'plan-${workload}-${azureRegion}-001'
+var appServicePrivateDnsZoneName = 'privatelink.azurewebsites.net'
+var appServicePrivateEndpointName = 'pl-${workload}-${azureRegion}-appService'
+var azureSQLprivateDnsZoneName = 'privatelink${environment().suffixes.sqlServerHostname}'
+var containerInstanceSubnetName = 'snet-${workload}-${azureRegion}-containerInstance'
+var containerInstanceSubnetPrefix = '10.0.30.0/24'
+var keyVaultName = 'kv-${workload}-${azureRegion}-001'
+var logAnalyticsWorkspaceName = 'log-${workload}-${azureRegion}-001'
 var privateEndpointSubnetName = 'snet-${workload}-${azureRegion}-privateEndpoint'
 var privateEndpointSubnetPrefix = '10.0.10.0/24'
+var resourceGroupName = 'rg-${workload}-${azureRegion}-production'
+var sqlDatabaseName = 'sqldb-${workload}-${azureRegion}-001'
+var sqlServerName = 'sql-${workload}-${azureRegion}-001'
+var sqlServerPrivateEndpointName = 'pl-${workload}-${azureRegion}-sqlServer'
 var virtualNetworkName = 'vnet-${workload}-${azureRegion}-001'
 var virtualnetworkPrefix = '10.0.0.0/16'
 var vnetIntegrationSubnetName = 'snet-${workload}-${azureRegion}-vnetintegration'
 var vnetIntegrationSubnetPrefix = '10.0.20.0/24'
 
-// Private DNS
-var appServicePrivateDnsZoneName = 'privatelink.azurewebsites.net'
-var azureSQLprivateDnsZoneName = 'privatelink${environment().suffixes.sqlServerHostname}'
-
-// SQL
-var sqlDatabaseName = 'sqldb-${workload}-${azureRegion}-001'
-var sqlServerName = 'sql-${workload}-${azureRegion}-001'
-var sqlServerPrivateEndpointName = 'pl-${workload}-${azureRegion}-sqlServer'
-
-// App Service Plan
-var appServicePlanName = 'plan-${workload}-${azureRegion}-001'
-
+// Existing Resource - Key Vault
+//////////////////////////////////////////////////
+resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' existing = {
+  scope: resourceGroup(resourceGroupName)
+  name: keyVaultName
+}
 
 // Module - Log Analytics Workspace
 //////////////////////////////////////////////////
@@ -75,6 +72,8 @@ module virtualNetworkModule './modules/virtual_network.bicep' = {
   params: {
     applicationGatewaySubnetName: applicationGatewaySubnetName
     applicationGatewaySubnetPrefix: applicationGatewaySubnetPrefix
+    containerInstanceSubnetName: containerInstanceSubnetName
+    containerInstanceSubnetPrefix: containerInstanceSubnetPrefix
     location: location
     logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
     privateEndpointSubnetName: privateEndpointSubnetName
@@ -103,7 +102,7 @@ module privateDnsModule './modules/private_dns_zone.bicep' = {
 module sqlModule './modules/sql.bicep' = {
   name: 'sqlDeployment'
   params: {
-    adminPassword: adminPassword
+    adminPassword: keyVault.getSecret('adminPassword')
     adminUserName: adminUserName
     azureSqlPrivateDnsZoneId: privateDnsModule.outputs.azureSqlPrivateDnsZoneId
     location: location
@@ -122,5 +121,27 @@ module appServicePlanModule './modules/app_service_plan.bicep' = {
   params: {
     appServicePlanName: appServicePlanName
     location: location
+  }
+}
+
+// Module - App Service
+//////////////////////////////////////////////////
+module appService './modules/app_service.bicep' = {
+  name: 'appServiceDeployment'
+  params: {
+    adminPassword: keyVault.getSecret('adminPassword')
+    adminUserName: adminUserName
+    applicationInsightsConnectionString: applicationInsightsModule.outputs.applicationInsightsConnectionString
+    applicationInsightsInstrumentationKey: applicationInsightsModule.outputs.applicationInsightsInstrumentationKey    
+    appServiceName: appServiceName
+    appServicePlanId: appServicePlanModule.outputs.appServicePlanId
+    appServicePrivateDnsZoneId: privateDnsModule.outputs.appServicePrivateDnsZoneId
+    appServicePrivateEndpointName: appServicePrivateEndpointName
+    location: location
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
+    privateEndpointSubnetId: virtualNetworkModule.outputs.privateEndpointSubnetId
+    sqlDatabaseName: sqlDatabaseName
+    sqlServerFQDN: sqlModule.outputs.sqlServerFQDN
+    vnetIntegrationSubnetId: virtualNetworkModule.outputs.vnetIntegrationSubnetId
   }
 }
