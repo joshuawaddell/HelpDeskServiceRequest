@@ -136,7 +136,31 @@ resource appServiceDiagnostics 'Microsoft.insights/diagnosticSettings@2021-05-01
     workspaceId: logAnalyticsWorkspaceId
     logs: [
       {
-        category: 'AllLogs'
+        category: 'AppServiceHTTPLogs'
+        enabled: true
+      }
+      {
+        category: 'AppServiceConsoleLogs'
+        enabled: true
+      }
+      {
+        category: 'AppServiceAppLogs'
+        enabled: true
+      }
+      {
+        category: 'AppServiceFileAuditLogs'
+        enabled: true
+      }
+      {
+        category: 'AppServiceAuditLogs'
+        enabled: true
+      }
+      {
+        category: 'AppServiceIPSecAuditLogs'
+        enabled: true
+      }
+      {
+        category: 'AppServicePlatformLogs'
         enabled: true
       }
     ]

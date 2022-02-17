@@ -1,7 +1,7 @@
 // Parameters
 //////////////////////////////////////////////////
 @description('The name of the admin user.')
-param adminUserName string
+param adminUserName string = 'hdsradmin'
 
 @description('The selected Azure region for deployment.')
 param azureRegion string = 'eus'
@@ -12,7 +12,7 @@ param azureRegion string = 'eus'
   'dev'
   'test'
 ])
-param env string = 'prod'
+param env string = 'test'
 
 @description('The instance identifier')
 param instance string = '001'
@@ -50,7 +50,7 @@ var keyVaultName = 'kv-${workload}-${env}-${azureRegion}-${instance}'
 var logAnalyticsWorkspaceName = 'log-${workload}-${env}-${azureRegion}-${instance}'
 var privateEndpointSubnetName = 'snet-${workload}-${env}-${azureRegion}-privateEndpoint'
 var privateEndpointSubnetPrefix = '10.0.10.0/24'
-var resourceGroupName = 'rg-${workload}-${env}-${azureRegion}-production'
+var coreResourceGroupName = 'rg-${workload}-${env}-${azureRegion}-core'
 var sqlDatabaseName = 'sqldb-${workload}-${env}-${azureRegion}-${instance}'
 var sqlServerName = 'sql-${workload}-${env}-${azureRegion}-${instance}'
 var sslCertificateDataPassword = ''
@@ -63,14 +63,14 @@ var vnetIntegrationSubnetPrefix = '10.0.20.0/24'
 // Existing Resource - Key Vault
 //////////////////////////////////////////////////
 resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' existing = {
-  scope: resourceGroup(resourceGroupName)
+  scope: resourceGroup(coreResourceGroupName)
   name: keyVaultName
 }
 
 // Existing Resource - Managed Identity
 //////////////////////////////////////////////////
 resource applicationGatewayManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {
-  scope: resourceGroup(resourceGroupName)
+  scope: resourceGroup(coreResourceGroupName)
   name: applicationGatewayManagedIdentityName
 }
 
@@ -156,7 +156,7 @@ module appServicePlanModule './modules/app_service_plan.bicep' = {
 
 // Module - App Service
 //////////////////////////////////////////////////
-module appService './modules/app_service.bicep' = {
+module appServiceModule './modules/app_service.bicep' = {
   name: 'appServiceDeployment'
   params: {
     adminPassword: keyVault.getSecret('adminPassword')
@@ -178,8 +178,11 @@ module appService './modules/app_service.bicep' = {
 
 // Module - Application Gateway
 //////////////////////////////////////////////////
-module applicationGateway './modules/application_gateway.bicep' = {
+module applicationGatewayModule './modules/application_gateway.bicep' = {
   name: 'applicationGatewayDeployment'
+  dependsOn: [
+    appServiceModule
+  ]
   params: {
     applicationGatewayManagedIdentityId: applicationGatewayManagedIdentity.id
     applicationGatewayName: applicationGatewayName

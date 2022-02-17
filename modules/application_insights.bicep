@@ -40,7 +40,47 @@ resource applicationInsightsDiagnostics 'microsoft.insights/diagnosticSettings@2
     logAnalyticsDestinationType: 'Dedicated'
     logs: [
       {
-        category: 'AllLogs'
+        category: 'AppAvailabilityResults'
+        enabled: true
+      }
+      {
+        category: 'AppBrowserTimings'
+        enabled: true
+      }
+      {
+        category: 'AppEvents'
+        enabled: true
+      }
+      {
+        category: 'AppMetrics'
+        enabled: true
+      }
+      {
+        category: 'AppDependencies'
+        enabled: true
+      }
+      {
+        category: 'AppExceptions'
+        enabled: true
+      }
+      {
+        category: 'AppPageViews'
+        enabled: true
+      }
+      {
+        category: 'AppPerformanceCounters'
+        enabled: true
+      }
+      {
+        category: 'AppRequests'
+        enabled: true
+      }
+      {
+        category: 'AppSystemEvents'
+        enabled: true
+      }
+      {
+        category: 'AppTraces'
         enabled: true
       }
     ]

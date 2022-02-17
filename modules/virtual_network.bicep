@@ -104,7 +104,7 @@ resource virtualNetworkDiagnostics 'microsoft.insights/diagnosticSettings@2021-0
     logAnalyticsDestinationType: 'Dedicated'
     logs: [
       {
-        category: 'AllLogs'
+        category: 'VMProtectionAlerts'
         enabled: true
       }
     ]

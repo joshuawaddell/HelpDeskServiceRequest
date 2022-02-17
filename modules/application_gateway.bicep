@@ -81,7 +81,15 @@ resource applicationGatewayPublicIpAddressDiagnostics 'Microsoft.insights/diagno
     logAnalyticsDestinationType: 'Dedicated'
     logs: [
       {
-        category: 'AllLogs'
+        category: 'DDoSProtectionNotifications'
+        enabled: true
+      }
+      {
+        category: 'DDoSMitigationFlowLogs'
+        enabled: true
+      }
+      {
+        category: 'DDoSMitigationReports'
         enabled: true
       }
     ]
@@ -162,19 +170,6 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
         }
       }
     ]
-    probes: [
-      {
-        name: appServiceConfig.configuration.healthProbeName
-        properties: {
-          interval: 30
-          path: '/'
-          protocol: 'Https'
-          timeout: 30
-          unhealthyThreshold: 3
-          pickHostNameFromBackendHttpSettings: true
-        }
-      }
-    ]
     backendHttpSettingsCollection: [
       {
         name: appServiceConfig.configuration.httpSettingName
@@ -184,9 +179,6 @@ resource applicationGateway 'Microsoft.Network/applicationGateways@2020-11-01' =
           cookieBasedAffinity: 'Disabled'
           requestTimeout: 30
           pickHostNameFromBackendAddress: true
-          probe: {
-            id: resourceId('Microsoft.Network/applicationGateways/probes', applicationGatewayName, appServiceConfig.configuration.healthProbeName)
-          }
         }
       }
     ]
@@ -288,7 +280,15 @@ resource applicationGatewayDiagnostics 'Microsoft.insights/diagnosticSettings@20
     logAnalyticsDestinationType: 'Dedicated'
     logs: [
       {
-        category: 'AllLogs'
+        category: 'ApplicationGatewayAccessLog'
+        enabled: true
+      }
+      {
+        category: 'ApplicationGatewayPerformanceLog'
+        enabled: true
+      }
+      {
+        category: 'ApplicationGatewayFirewallLog'
         enabled: true
       }
     ]

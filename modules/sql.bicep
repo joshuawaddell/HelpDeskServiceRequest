@@ -83,13 +83,57 @@ resource sqlDatabaseDiagnostics 'microsoft.insights/diagnosticSettings@2021-05-0
     logAnalyticsDestinationType: 'Dedicated'
     logs: [
       {
-        category: 'AllLogs'
+        category: 'SqlInsights'
+        enabled: true
+      }
+      {
+        category: 'AutomaticTuning'
+        enabled: true
+      }
+      {
+        category: 'QueryStoreRuntimeStatistics'
+        enabled: true
+      }
+      {
+        category: 'QueryStoreWaitStatistics'
+        enabled: true
+      }
+      {
+        category: 'Errors'
+        enabled: true
+      }
+      {
+        category: 'DatabaseWaitStatistics'
+        enabled: true
+      }
+      {
+        category: 'Timeouts'
+        enabled: true
+      }
+      {
+        category: 'Blocks'
+        enabled: true
+      }
+      {
+        category: 'Deadlocks'
+        enabled: true
+      }
+      {
+        category: 'SQLInsights'
         enabled: true
       }
     ]
     metrics: [
       {
-        category: 'AllMetrics'
+        category: 'Basic'
+        enabled: true
+      }
+      {
+        category: 'InstanceAndAppAdvanced'
+        enabled: true
+      }
+      {
+        category: 'WorkloadManagement'
         enabled: true
       }
     ]
