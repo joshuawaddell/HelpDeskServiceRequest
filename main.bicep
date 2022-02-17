@@ -4,37 +4,60 @@
 param adminUserName string
 
 @description('The selected Azure region for deployment.')
-param azureRegion string = 'eastus'
+param azureRegion string = 'eus'
+
+@description('The environment name.')
+@allowed([
+  'prod'
+  'dev'
+  'test'
+])
+param env string = 'prod'
+
+@description('The instance identifier')
+param instance string = '001'
 
 @description('The location for all resources.')
 param location string = resourceGroup().location
+
+@description('The value for Root Domain Name.')
+param rootDomainName string = 'joshuawaddell.cloud'
+
+@description('The name of the SSL Certificate.')
+param sslCertificateName string = 'joshuawaddell.cloud'
 
 @description('The name of the application workload.')
 param workload string = 'cop2940'
 
 // Global Variables
 //////////////////////////////////////////////////
-var applicationGatewaySubnetName = 'snet-${workload}-${azureRegion}-applicationGateway'
+var applicationGatewayManagedIdentityName = 'id-${workload}-${env}-${azureRegion}-applicationGateway'
+var applicationGatewayName = 'appgw-${workload}-${env}-${azureRegion}-${instance}'
+var applicationGatewayPublicIpAddressName = 'pip-${workload}-${env}-${azureRegion}-${instance}'
+var applicationGatewaySubnetName = 'snet-${workload}-${env}-${azureRegion}-applicationGateway'
 var applicationGatewaySubnetPrefix = '10.0.0.0/24'
-var applicationInsightsName = 'appinsights-${workload}-${azureRegion}-001'
-var appServiceName = 'app-${workload}-${azureRegion}-001'
-var appServicePlanName = 'plan-${workload}-${azureRegion}-001'
+var applicationInsightsName = 'appinsights-${workload}-${env}-${azureRegion}-${instance}'
+var appServiceFqdn = replace('app-${workload}-${env}-${azureRegion}-${instance}.azurewebsites.net', '-', '')
+var appServiceHostName = 'hdsr.${rootDomainName}'
+var appServiceName = replace('app-${workload}-${env}-${azureRegion}-${instance}', '-', '')
+var appServicePlanName = 'plan-${workload}-${env}-${azureRegion}-${instance}'
 var appServicePrivateDnsZoneName = 'privatelink.azurewebsites.net'
-var appServicePrivateEndpointName = 'pl-${workload}-${azureRegion}-appService'
+var appServicePrivateEndpointName = 'pl-${workload}-${env}-${azureRegion}-appService'
 var azureSQLprivateDnsZoneName = 'privatelink${environment().suffixes.sqlServerHostname}'
-var containerInstanceSubnetName = 'snet-${workload}-${azureRegion}-containerInstance'
+var containerInstanceSubnetName = 'snet-${workload}-${env}-${azureRegion}-containerInstance'
 var containerInstanceSubnetPrefix = '10.0.30.0/24'
-var keyVaultName = 'kv-${workload}-${azureRegion}-001'
-var logAnalyticsWorkspaceName = 'log-${workload}-${azureRegion}-001'
-var privateEndpointSubnetName = 'snet-${workload}-${azureRegion}-privateEndpoint'
+var keyVaultName = 'kv-${workload}-${env}-${azureRegion}-${instance}'
+var logAnalyticsWorkspaceName = 'log-${workload}-${env}-${azureRegion}-${instance}'
+var privateEndpointSubnetName = 'snet-${workload}-${env}-${azureRegion}-privateEndpoint'
 var privateEndpointSubnetPrefix = '10.0.10.0/24'
-var resourceGroupName = 'rg-${workload}-${azureRegion}-production'
-var sqlDatabaseName = 'sqldb-${workload}-${azureRegion}-001'
-var sqlServerName = 'sql-${workload}-${azureRegion}-001'
-var sqlServerPrivateEndpointName = 'pl-${workload}-${azureRegion}-sqlServer'
-var virtualNetworkName = 'vnet-${workload}-${azureRegion}-001'
+var resourceGroupName = 'rg-${workload}-${env}-${azureRegion}-production'
+var sqlDatabaseName = 'sqldb-${workload}-${env}-${azureRegion}-${instance}'
+var sqlServerName = 'sql-${workload}-${env}-${azureRegion}-${instance}'
+var sslCertificateDataPassword = ''
+var sqlServerPrivateEndpointName = 'pl-${workload}-${env}-${azureRegion}-sqlServer'
+var virtualNetworkName = 'vnet-${workload}-${env}-${azureRegion}-${instance}'
 var virtualnetworkPrefix = '10.0.0.0/16'
-var vnetIntegrationSubnetName = 'snet-${workload}-${azureRegion}-vnetintegration'
+var vnetIntegrationSubnetName = 'snet-${workload}-${env}-${azureRegion}-vnetintegration'
 var vnetIntegrationSubnetPrefix = '10.0.20.0/24'
 
 // Existing Resource - Key Vault
@@ -42,6 +65,13 @@ var vnetIntegrationSubnetPrefix = '10.0.20.0/24'
 resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' existing = {
   scope: resourceGroup(resourceGroupName)
   name: keyVaultName
+}
+
+// Existing Resource - Managed Identity
+//////////////////////////////////////////////////
+resource applicationGatewayManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {
+  scope: resourceGroup(resourceGroupName)
+  name: applicationGatewayManagedIdentityName
 }
 
 // Module - Log Analytics Workspace
@@ -68,7 +98,7 @@ module applicationInsightsModule './modules/application_insights.bicep' = {
 // Module - Virtual Network
 //////////////////////////////////////////////////
 module virtualNetworkModule './modules/virtual_network.bicep' = {
-  name: 'virtualNetwork001Deployment'
+  name: 'virtualNetworkDeployment'
   params: {
     applicationGatewaySubnetName: applicationGatewaySubnetName
     applicationGatewaySubnetPrefix: applicationGatewaySubnetPrefix
@@ -143,5 +173,24 @@ module appService './modules/app_service.bicep' = {
     sqlDatabaseName: sqlDatabaseName
     sqlServerFQDN: sqlModule.outputs.sqlServerFQDN
     vnetIntegrationSubnetId: virtualNetworkModule.outputs.vnetIntegrationSubnetId
+  }
+}
+
+// Module - Application Gateway
+//////////////////////////////////////////////////
+module applicationGateway './modules/application_gateway.bicep' = {
+  name: 'applicationGatewayDeployment'
+  params: {
+    applicationGatewayManagedIdentityId: applicationGatewayManagedIdentity.id
+    applicationGatewayName: applicationGatewayName
+    applicationGatewayPublicIpAddressName: applicationGatewayPublicIpAddressName
+    applicationGatewaySubnetId: virtualNetworkModule.outputs.applicationGatewaySubnetId
+    appServiceFqdn: appServiceFqdn
+    appServiceHostName: appServiceHostName
+    location: location
+    logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
+    sslCertificateData: keyVault.getSecret('certificate')
+    sslCertificateDataPassword: sslCertificateDataPassword
+    sslCertificateName: sslCertificateName
   }
 }
