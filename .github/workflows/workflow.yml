@@ -2,9 +2,19 @@ name: deploy-application
 
 on: [workflow_dispatch]
 
+env:
+    AZURE_RESOURCEGROUP_NAME: rg-cop2940-test-eus-app
+
 jobs:
-  say-hello:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: 'placeholder step'
-        run: echo "Hello world!"
+    - uses: actions/checkout@v2
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - uses: azure/arm-deploy@v1
+      with:
+        deploymentName: ${{ github.run_number }}
+        resourceGroupName: ${{ env.AZURE_RESOURCEGROUP_NAME }}
+        template: ./deploy/main.bicep

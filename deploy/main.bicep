@@ -76,7 +76,7 @@ resource applicationGatewayManagedIdentity 'Microsoft.ManagedIdentity/userAssign
 
 // Module - Log Analytics Workspace
 //////////////////////////////////////////////////
-module logAnalyticsModule './modules/log_analytics.bicep' = {
+module logAnalyticsModule './log_analytics.bicep' = {
   name: 'logAnalyticsDeployment'
   params: {
     location: location
@@ -86,7 +86,7 @@ module logAnalyticsModule './modules/log_analytics.bicep' = {
 
 // Module - Application Insights
 //////////////////////////////////////////////////
-module applicationInsightsModule './modules/application_insights.bicep' = {
+module applicationInsightsModule './application_insights.bicep' = {
   name: 'applicationInsightsDeployment'
   params: {
     applicationInsightsName: applicationInsightsName
@@ -97,7 +97,7 @@ module applicationInsightsModule './modules/application_insights.bicep' = {
 
 // Module - Virtual Network
 //////////////////////////////////////////////////
-module virtualNetworkModule './modules/virtual_network.bicep' = {
+module virtualNetworkModule './virtual_network.bicep' = {
   name: 'virtualNetworkDeployment'
   params: {
     applicationGatewaySubnetName: applicationGatewaySubnetName
@@ -117,7 +117,7 @@ module virtualNetworkModule './modules/virtual_network.bicep' = {
 
 // Module - Private Dns
 //////////////////////////////////////////////////
-module privateDnsModule './modules/private_dns_zone.bicep' = {
+module privateDnsModule './private_dns_zone.bicep' = {
   name: 'privateDnsDeployment'
   params: {
     appServicePrivateDnsZoneName: appServicePrivateDnsZoneName
@@ -129,7 +129,7 @@ module privateDnsModule './modules/private_dns_zone.bicep' = {
 
 // Module - SQL
 //////////////////////////////////////////////////
-module sqlModule './modules/sql.bicep' = {
+module sqlModule './sql.bicep' = {
   name: 'sqlDeployment'
   params: {
     adminPassword: keyVault.getSecret('adminPassword')
@@ -146,7 +146,7 @@ module sqlModule './modules/sql.bicep' = {
 
 // Module - App Service Plan
 //////////////////////////////////////////////////
-module appServicePlanModule './modules/app_service_plan.bicep' = {
+module appServicePlanModule './app_service_plan.bicep' = {
   name: 'appServicePlanDeployment'
   params: {
     appServicePlanName: appServicePlanName
@@ -156,7 +156,7 @@ module appServicePlanModule './modules/app_service_plan.bicep' = {
 
 // Module - App Service
 //////////////////////////////////////////////////
-module appServiceModule './modules/app_service.bicep' = {
+module appServiceModule './app_service.bicep' = {
   name: 'appServiceDeployment'
   params: {
     adminPassword: keyVault.getSecret('adminPassword')
@@ -178,7 +178,7 @@ module appServiceModule './modules/app_service.bicep' = {
 
 // Module - Application Gateway
 //////////////////////////////////////////////////
-module applicationGatewayModule './modules/application_gateway.bicep' = {
+module applicationGatewayModule './application_gateway.bicep' = {
   name: 'applicationGatewayDeployment'
   dependsOn: [
     appServiceModule
