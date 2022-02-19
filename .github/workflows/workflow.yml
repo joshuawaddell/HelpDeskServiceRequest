@@ -1,20 +1,62 @@
+# Workflow name
 name: deploy-application
 
-on: [workflow_dispatch]
+# Triggers
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'deploy/**'
 
+# Variables
 env:
-    AZURE_RESOURCEGROUP_NAME: rg-cop2940-test-eus-app
+    resource_group_name: rg-cop2940-test-eus-app
+    aci_prefix: ci-cop2940-test-eus-001
+    runner_image: ghcr.io/colindembovsky/ubuntu-actions-runner:6d7a59dfa95ec094a5fa8292bad01158c374e3ad
 
+# Jobs
 jobs:
-  deploy:
+  deploy_infrastructure:
+    name: Deploy Infrastructure
     runs-on: ubuntu-latest
     steps:
+    
+    - name: Checkout Code
     - uses: actions/checkout@v2
+    
+    - name: Login to Azure
     - uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Deploy Bicep File
     - uses: azure/arm-deploy@v1
       with:
-        deploymentName: ${{ github.run_number }}
-        resourceGroupName: ${{ env.AZURE_RESOURCEGROUP_NAME }}
+        deploymentName: ${{ github.run_id }}
+        resourceGroupName: ${{ env.resource_group_name }}
         template: ./deploy/main.bicep
+
+  deploy_self_hosted_runner:
+    name: Deploy Ephemeral Runner
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Login to Azure
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Create Runner
+      run: |
+        az container create \
+          -g ${{ env.resource_group_name }} \
+          -n ${{ env.aci_prefix }}-${{ github.run_id }} \
+          --image ${{ env.runner_image }} \
+          --restart-policy Never \
+          TODO: --subnet \
+          --environment-variables \
+            TODO: RUNNER_REPOSITORY_URL=https://github.com/${{ github.repository }} \
+            TODO: GITHUB_TOKEN= \
+            RUNNER_OPTIONS="--ephemeral" \
+            RUNNER_NAME=${{ env.aci_prefix }}-${{ github.run_id }}
