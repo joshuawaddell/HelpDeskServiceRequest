@@ -2,7 +2,7 @@
 
 ## Service Principal
 
-`az ad sp create-for-rbac -n spn-cop2940-test-eus-github --role Contributor --scopes /subscriptions/991ab2d9-e387-49a4-9cb5-a2f3127f3bb0 --sdk-auth`
+`az ad sp create-for-rbac -n 'name of service principal' --role Contributor --scopes 'subscription id' --sdk-auth`
 
 ## Todo
 
