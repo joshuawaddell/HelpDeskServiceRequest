@@ -60,3 +60,24 @@ jobs:
             TODO: GITHUB_TOKEN= \
             RUNNER_OPTIONS="--ephemeral" \
             RUNNER_NAME=${{ env.aci_prefix }}-${{ github.run_id }}
+
+  deploy_application_code:
+    name: Deploy Application Code
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: ''
+
+  delete_self_hosted_runner:
+    name: Delete Self-Hosted Runner
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Login to Azure
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Delete Runner
+      run: |
+        az container delete -g ${{ env.resource_group_name }} -n ${{ env.aci_prefix }}-${{ github.run_id }} --yes
