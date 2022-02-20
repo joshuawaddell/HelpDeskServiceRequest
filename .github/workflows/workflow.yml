@@ -1,5 +1,5 @@
 # Workflow name
-name: deploy-application
+name: deploy-workload
 
 # Triggers
 on: [workflow_dispatch]
