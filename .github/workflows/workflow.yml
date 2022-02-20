@@ -56,14 +56,6 @@ jobs:
             RUNNER_OPTIONS="--ephemeral" \
             RUNNER_NAME=${{ env.aci_prefix }}-${{ github.run_id }}
 
-  deploy_application_code:
-    name: Deploy Application Code
-    runs-on: ubuntu-latest
-    steps:
-
-    - name: ''
-    - uses: ''
-
   delete_self_hosted_runner:
     name: Delete Self-Hosted Runner
     runs-on: ubuntu-latest
