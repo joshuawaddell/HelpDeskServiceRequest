@@ -4,10 +4,8 @@ name: deploy-application
 # Triggers
 on:
   push:
-    branches:
-      - main
     paths:
-      - 'deploy/**'
+      - 'infrastructure/**'
 
 # Variables
 env:
