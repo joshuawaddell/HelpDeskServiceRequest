@@ -30,10 +30,11 @@ jobs:
       with:
         deploymentName: ${{ github.run_id }}
         resourceGroupName: ${{ env.resource_group_name }}
-        template: ./deploy/main.bicep
+        template: ./infrastructure/main.bicep
 
   deploy_self_hosted_runner:
-    name: Deploy Ephemeral Runner
+    needs: deploy_infrastructure
+    name: Deploy Ephemeral Runner    
     runs-on: ubuntu-latest
     steps:
 
@@ -49,7 +50,7 @@ jobs:
           -n ${{ env.aci_prefix }}-${{ github.run_id }} \
           --image ${{ env.runner_image }} \
           --restart-policy Never \
-          --subnet /subscriptions/f12d732d-4a47-4edc-a11b-d6dc6909ddbe/resourceGroups/cd-ephemeral/providers/Microsoft.Network/virtualNetworks/private-vnet/subnets/default \
+          --subnet /subscriptions/991ab2d9-e387-49a4-9cb5-a2f3127f3bb0/resourceGroups/rg-cop2940-test-eus-app/providers/Microsoft.Network/virtualNetworks/vnet-cop2940-test-eus-001/subnets/snet-cop2940-test-eus-containerInstance \
           --environment-variables \
             RUNNER_REPOSITORY_URL=https://github.com/${{ github.repository }} \
             GITHUB_TOKEN=${{ secrets.PAT }} \
@@ -57,6 +58,7 @@ jobs:
             RUNNER_NAME=${{ env.aci_prefix }}-${{ github.run_id }}
 
   delete_self_hosted_runner:
+    needs: deploy_self_hosted_runner
     name: Delete Self-Hosted Runner
     runs-on: ubuntu-latest
     steps:
