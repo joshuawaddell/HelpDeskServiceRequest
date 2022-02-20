@@ -2,10 +2,7 @@
 name: deploy-application
 
 # Triggers
-on:
-  push:
-    paths:
-      - 'infrastructure/**'
+on: [workflow_dispatch]
 
 # Variables
 env:
@@ -65,6 +62,7 @@ jobs:
     steps:
 
     - name: ''
+    - uses: ''
 
   delete_self_hosted_runner:
     name: Delete Self-Hosted Runner
