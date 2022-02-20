@@ -6,9 +6,11 @@ on: [workflow_dispatch]
 
 # Variables
 env:
-    resource_group_name: rg-cop2940-test-eus-app
     aci_prefix: ci-cop2940-test-eus-001
+    aci_subnet_name: snet-cop2940-test-eus-containerInstance
+    resource_group_name: rg-cop2940-test-eus-app
     runner_image: ghcr.io/colindembovsky/ubuntu-actions-runner:6d7a59dfa95ec094a5fa8292bad01158c374e3ad
+    virtual_network_name: vnet-cop2940-test-eus-001
 
 # Jobs
 jobs:
@@ -34,7 +36,7 @@ jobs:
 
   deploy_self_hosted_runner:
     needs: deploy_infrastructure
-    name: Deploy Ephemeral Runner    
+    name: Deploy Self-Hosted Runner   
     runs-on: ubuntu-latest
     steps:
 
@@ -50,7 +52,7 @@ jobs:
           -n ${{ env.aci_prefix }}-${{ github.run_id }} \
           --image ${{ env.runner_image }} \
           --restart-policy Never \
-          --subnet /subscriptions/991ab2d9-e387-49a4-9cb5-a2f3127f3bb0/resourceGroups/rg-cop2940-test-eus-app/providers/Microsoft.Network/virtualNetworks/vnet-cop2940-test-eus-001/subnets/snet-cop2940-test-eus-containerInstance \
+          --subnet /subscriptions/${{ secrets.AZURE_CREDENTIALS }}/resourceGroups/${{ env.resource_group_name }}/providers/Microsoft.Network/virtualNetworks/${{ env.virtual_network_name }}/subnets/${{ env.aci_subnet_name }} \
           --environment-variables \
             RUNNER_REPOSITORY_URL=https://github.com/${{ github.repository }} \
             GITHUB_TOKEN=${{ secrets.PAT }} \
