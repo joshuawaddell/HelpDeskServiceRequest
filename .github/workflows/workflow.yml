@@ -49,10 +49,10 @@ jobs:
           -n ${{ env.aci_prefix }}-${{ github.run_id }} \
           --image ${{ env.runner_image }} \
           --restart-policy Never \
-          TODO: --subnet \
+          --subnet /subscriptions/f12d732d-4a47-4edc-a11b-d6dc6909ddbe/resourceGroups/cd-ephemeral/providers/Microsoft.Network/virtualNetworks/private-vnet/subnets/default \
           --environment-variables \
-            TODO: RUNNER_REPOSITORY_URL=https://github.com/${{ github.repository }} \
-            TODO: GITHUB_TOKEN= \
+            RUNNER_REPOSITORY_URL=https://github.com/${{ github.repository }} \
+            GITHUB_TOKEN=${{ secrets.PAT }} \
             RUNNER_OPTIONS="--ephemeral" \
             RUNNER_NAME=${{ env.aci_prefix }}-${{ github.run_id }}
 
