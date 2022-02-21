@@ -68,7 +68,7 @@ jobs:
 
     # Create Resource Group
     - name: Create Resource Group
-      uses: azure/CLI@v2
+      uses: azure/CLI@v1
       with:
         azcliversion: 2.33.1
         inlineScript: |
