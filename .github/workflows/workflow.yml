@@ -6,70 +6,125 @@ on: [workflow_dispatch]
 
 # Variables
 env:
-    aci_prefix: ci-cop2940-test-eus-001
-    aci_subnet_name: snet-cop2940-test-eus-containerInstance
-    resource_group_name: rg-cop2940-test-eus-app
+    # The name of the existing Key Vault Secret for the admin password.
+    adminPassword: adminPassword
+    
+    # The name of the admin user.
+    adminUserName: hdsradmin
+
+    # The name of the existing Application Gateway Managed Identity.
+    applicationGatewayManagedIdentityName: id-cop2940-test-eus-applicationGateway
+
+    # The name of the existing Application Gateway Managed Identity Resource Group.
+    applicationGatewayManagedIdentityResourceGroupName: rg-cop2940-test-eus-core
+
+    # The selected Azure region for deployment (e.g. 'eastus' for East US).
+    azureRegion: eastus
+
+    # The name of the existing Key Vault Secret for the certificate.
+    certificate: certificate
+
+    # The The environment name (prod, dev, test).
+    env: test
+
+    # The instance identifier.
+    instance: 001
+
+    # The name of the existing Azure Key Vault.
+    keyVaultName: kv-cop2940-test-eus-001
+
+    # The name of the existing Azure Key Vault Resource Group.
+    keyVaultResourceGroupName: rg-cop2940-test-eus-core
+
+    # The value for Root Domain Name.
+    rootDomainName: joshuawaddell.cloud
+
+    # The image location for the GitHub self-hosted runner.
     runner_image: ghcr.io/colindembovsky/ubuntu-actions-runner:6d7a59dfa95ec094a5fa8292bad01158c374e3ad
-    virtual_network_name: vnet-cop2940-test-eus-001
+
+    # The name of the SSL Certificate.
+    sslCertificateName: joshuawaddell.cloud
+
+    # The name of the application workload.
+    workload: cop2940    
 
 # Jobs
 jobs:
+  # Deploy Infrastructure to Azure
   deploy_infrastructure:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
     steps:
     
+    # Checkout Code
     - name: Checkout Code
       uses: actions/checkout@v2
     
+    # Login to Azure
     - name: Login to Azure
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # Create Resource Group
+    - name: Create Resource Group
+      uses: azure/CLI@v2
+      with:
+        azcliversion: 2.33.1
+        inlineScript: |
+          az group create -n rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app -l ${{env.azureRegion}}
     
+    # Deploy Bicep File
     - name: Deploy Bicep File
       uses: azure/arm-deploy@v1
       with:
         deploymentName: ${{ github.run_id }}
-        resourceGroupName: ${{ env.resource_group_name }}
+        resourceGroupName: rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app
         template: ./infrastructure/main.bicep
+        parameters: adminPassword=${{env.adminPassword}} adminUserName=${{env.adminUserName}} applicationGatewayManagedIdentityName=${{env.applicationGatewayManagedIdentityName}} applicationGatewayManagedIdentityResourceGroupName=${{env.applicationGatewayManagedIdentityResourceGroupName}} azureRegion=${{env.azureRegion}} certificate=${{env.certificate}} env=${{env.env}} instance=${{env.instance}} keyVaultName=${{env.keyVaultName}} keyVaultResourceGroupName=${{env.keyVaultResourceGroupName}} rootDomainName=${{env.rootDomainName}} sslCertificateName=${{env.sslCertificateName}} workload=${{env.workload}}
 
+  # Deploy GitHub Self-hosted Runner to Azure
   deploy_self_hosted_runner:
     needs: deploy_infrastructure
     name: Deploy Self-Hosted Runner   
     runs-on: ubuntu-latest
     steps:
 
+    # Login to Azure
     - name: Login to Azure
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    # Create Runner
     - name: Create Runner
       run: |
         az container create \
-          -g ${{ env.resource_group_name }} \
-          -n ${{ env.aci_prefix }}-${{ github.run_id }} \
+          -g rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app \
+          -n ci-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-${{env.instance}}-${{ github.run_id }} \
           --image ${{ env.runner_image }} \
           --restart-policy Never \
-          --subnet /subscriptions/${{ secrets.AZURE_CREDENTIALS }}/resourceGroups/${{ env.resource_group_name }}/providers/Microsoft.Network/virtualNetworks/${{ env.virtual_network_name }}/subnets/${{ env.aci_subnet_name }} \
+          --subnet /subscriptions/${{ secrets.AZURE_CREDENTIALS }}/resourceGroups/rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app/providers/Microsoft.Network/virtualNetworks/vnet-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-${{env.instance}}/subnets/snet-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-containerInstance \
           --environment-variables \
             RUNNER_REPOSITORY_URL=https://github.com/${{ github.repository }} \
             GITHUB_TOKEN=${{ secrets.PAT }} \
             RUNNER_OPTIONS="--ephemeral" \
-            RUNNER_NAME=${{ env.aci_prefix }}-${{ github.run_id }}
+            RUNNER_NAME=ci-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-${{env.instance}}-${{ github.run_id }}
 
+  # Delete GitHub Self-hosted Runner from Azure
   delete_self_hosted_runner:
     needs: deploy_self_hosted_runner
     name: Delete Self-Hosted Runner
     runs-on: ubuntu-latest
     steps:
 
+    # Login to Azure
     - name: Login to Azure
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    # Delete Runner
     - name: Delete Runner
       run: |
-        az container delete -g ${{ env.resource_group_name }} -n ${{ env.aci_prefix }}-${{ github.run_id }} --yes
+        az container delete -g rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app -n ci-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-${{env.instance}}-${{ github.run_id }} --yes

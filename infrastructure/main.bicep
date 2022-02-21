@@ -1,10 +1,22 @@
 // Parameters
 //////////////////////////////////////////////////
+@description('The name of the existing Key Vault Secret for the admin password.')
+param adminPassword string
+
 @description('The name of the admin user.')
-param adminUserName string = 'hdsradmin'
+param adminUserName string
+
+@description('The name of the existing Application Gateway Managed Identity.')
+param applicationGatewayManagedIdentityName string
+
+@description('The name of the existing Application Gateway Managed Identity Resource Group.')
+param applicationGatewayManagedIdentityResourceGroupName string
 
 @description('The selected Azure region for deployment.')
-param azureRegion string = 'eus'
+param azureRegion string
+
+@description('The name of the existing Key Vault Secret for the certificate.')
+param certificate string
 
 @description('The environment name.')
 @allowed([
@@ -12,26 +24,31 @@ param azureRegion string = 'eus'
   'dev'
   'test'
 ])
-param env string = 'test'
+param env string
 
-@description('The instance identifier')
-param instance string = '001'
+@description('The instance identifier.')
+param instance string
+
+@description('The name of the existing Azure Key Vault.')
+param keyVaultName string
+
+@description('The name of the existing Azure Key Vault Resource Group.')
+param keyVaultResourceGroupName string
 
 @description('The location for all resources.')
 param location string = resourceGroup().location
 
 @description('The value for Root Domain Name.')
-param rootDomainName string = 'joshuawaddell.cloud'
+param rootDomainName string
 
 @description('The name of the SSL Certificate.')
-param sslCertificateName string = 'joshuawaddell.cloud'
+param sslCertificateName string
 
 @description('The name of the application workload.')
-param workload string = 'cop2940'
+param workload string
 
 // Global Variables
 //////////////////////////////////////////////////
-var applicationGatewayManagedIdentityName = 'id-${workload}-${env}-${azureRegion}-applicationGateway'
 var applicationGatewayName = 'appgw-${workload}-${env}-${azureRegion}-${instance}'
 var applicationGatewayPublicIpAddressName = 'pip-${workload}-${env}-${azureRegion}-${instance}'
 var applicationGatewaySubnetName = 'snet-${workload}-${env}-${azureRegion}-applicationGateway'
@@ -46,11 +63,9 @@ var appServicePrivateEndpointName = 'pl-${workload}-${env}-${azureRegion}-appSer
 var azureSQLprivateDnsZoneName = 'privatelink${environment().suffixes.sqlServerHostname}'
 var containerInstanceSubnetName = 'snet-${workload}-${env}-${azureRegion}-containerInstance'
 var containerInstanceSubnetPrefix = '10.0.30.0/24'
-var keyVaultName = 'kv-${workload}-${env}-${azureRegion}-${instance}'
 var logAnalyticsWorkspaceName = 'log-${workload}-${env}-${azureRegion}-${instance}'
 var privateEndpointSubnetName = 'snet-${workload}-${env}-${azureRegion}-privateEndpoint'
 var privateEndpointSubnetPrefix = '10.0.10.0/24'
-var coreResourceGroupName = 'rg-${workload}-${env}-${azureRegion}-core'
 var sqlDatabaseName = 'sqldb-${workload}-${env}-${azureRegion}-${instance}'
 var sqlServerName = 'sql-${workload}-${env}-${azureRegion}-${instance}'
 var sslCertificateDataPassword = ''
@@ -63,14 +78,14 @@ var vnetIntegrationSubnetPrefix = '10.0.20.0/24'
 // Existing Resource - Key Vault
 //////////////////////////////////////////////////
 resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' existing = {
-  scope: resourceGroup(coreResourceGroupName)
+  scope: resourceGroup(keyVaultResourceGroupName)
   name: keyVaultName
 }
 
 // Existing Resource - Managed Identity
 //////////////////////////////////////////////////
 resource applicationGatewayManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {
-  scope: resourceGroup(coreResourceGroupName)
+  scope: resourceGroup(applicationGatewayManagedIdentityResourceGroupName)
   name: applicationGatewayManagedIdentityName
 }
 
@@ -132,7 +147,7 @@ module privateDnsModule './private_dns_zone.bicep' = {
 module sqlModule './sql.bicep' = {
   name: 'sqlDeployment'
   params: {
-    adminPassword: keyVault.getSecret('adminPassword')
+    adminPassword: keyVault.getSecret(adminPassword)
     adminUserName: adminUserName
     azureSqlPrivateDnsZoneId: privateDnsModule.outputs.azureSqlPrivateDnsZoneId
     location: location
@@ -159,7 +174,7 @@ module appServicePlanModule './app_service_plan.bicep' = {
 module appServiceModule './app_service.bicep' = {
   name: 'appServiceDeployment'
   params: {
-    adminPassword: keyVault.getSecret('adminPassword')
+    adminPassword: keyVault.getSecret(adminPassword)
     adminUserName: adminUserName
     applicationInsightsConnectionString: applicationInsightsModule.outputs.applicationInsightsConnectionString
     applicationInsightsInstrumentationKey: applicationInsightsModule.outputs.applicationInsightsInstrumentationKey    
@@ -192,7 +207,7 @@ module applicationGatewayModule './application_gateway.bicep' = {
     appServiceHostName: appServiceHostName
     location: location
     logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
-    sslCertificateData: keyVault.getSecret('certificate')
+    sslCertificateData: keyVault.getSecret(certificate)
     sslCertificateDataPassword: sslCertificateDataPassword
     sslCertificateName: sslCertificateName
   }
