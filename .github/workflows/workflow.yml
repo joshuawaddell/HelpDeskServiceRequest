@@ -13,10 +13,10 @@ env:
     adminUserName: hdsradmin
 
     # The name of the existing Application Gateway Managed Identity.
-    applicationGatewayManagedIdentityName: id-cop2940-test-eus-applicationGateway
+    applicationGatewayManagedIdentityName: id-cop2940-test-eastus-applicationGateway
 
     # The name of the existing Application Gateway Managed Identity Resource Group.
-    applicationGatewayManagedIdentityResourceGroupName: rg-cop2940-test-eus-core
+    applicationGatewayManagedIdentityResourceGroupName: rg-cop2940-test-eastus-core
 
     # The selected Azure region for deployment (e.g. 'eastus' for East US).
     azureRegion: eastus
@@ -27,14 +27,11 @@ env:
     # The The environment name (prod, dev, test).
     env: test
 
-    # The instance identifier.
-    instance: 001
-
     # The name of the existing Azure Key Vault.
-    keyVaultName: kv-cop2940-test-eus-001
+    keyVaultName: kv-cop2940-test-eastus
 
     # The name of the existing Azure Key Vault Resource Group.
-    keyVaultResourceGroupName: rg-cop2940-test-eus-core
+    keyVaultResourceGroupName: rg-cop2940-test-eastus-core
 
     # The value for Root Domain Name.
     rootDomainName: joshuawaddell.cloud
@@ -81,7 +78,7 @@ jobs:
         deploymentName: ${{ github.run_id }}
         resourceGroupName: rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app
         template: ./infrastructure/main.bicep
-        parameters: adminPassword=${{env.adminPassword}} adminUserName=${{env.adminUserName}} applicationGatewayManagedIdentityName=${{env.applicationGatewayManagedIdentityName}} applicationGatewayManagedIdentityResourceGroupName=${{env.applicationGatewayManagedIdentityResourceGroupName}} azureRegion=${{env.azureRegion}} certificate=${{env.certificate}} env=${{env.env}} instance=${{env.instance}} keyVaultName=${{env.keyVaultName}} keyVaultResourceGroupName=${{env.keyVaultResourceGroupName}} rootDomainName=${{env.rootDomainName}} sslCertificateName=${{env.sslCertificateName}} workload=${{env.workload}}
+        parameters: adminPassword=${{env.adminPassword}} adminUserName=${{env.adminUserName}} applicationGatewayManagedIdentityName=${{env.applicationGatewayManagedIdentityName}} applicationGatewayManagedIdentityResourceGroupName=${{env.applicationGatewayManagedIdentityResourceGroupName}} azureRegion=${{env.azureRegion}} certificate=${{env.certificate}} env=${{env.env}}  keyVaultName=${{env.keyVaultName}} keyVaultResourceGroupName=${{env.keyVaultResourceGroupName}} rootDomainName=${{env.rootDomainName}} sslCertificateName=${{env.sslCertificateName}} workload=${{env.workload}}
 
   # Deploy GitHub Self-hosted Runner to Azure
   deploy_self_hosted_runner:
@@ -101,15 +98,15 @@ jobs:
       run: |
         az container create \
           -g rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app \
-          -n ci-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-${{env.instance}}-${{ github.run_id }} \
+          -n ci-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-${{ github.run_id }} \
           --image ${{ env.runner_image }} \
           --restart-policy Never \
-          --subnet /subscriptions/${{ secrets.AZURE_CREDENTIALS }}/resourceGroups/rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app/providers/Microsoft.Network/virtualNetworks/vnet-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-${{env.instance}}/subnets/snet-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-containerInstance \
+          --subnet /subscriptions/${{ secrets.SUBSCRIPTION_ID }}/resourceGroups/rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app/providers/Microsoft.Network/virtualNetworks/vnet-${{env.workload}}-${{env.env}}-${{env.azureRegion}}/subnets/snet-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-containerInstance \
           --environment-variables \
             RUNNER_REPOSITORY_URL=https://github.com/${{ github.repository }} \
             GITHUB_TOKEN=${{ secrets.PAT }} \
             RUNNER_OPTIONS="--ephemeral" \
-            RUNNER_NAME=ci-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-${{env.instance}}-${{ github.run_id }}
+            RUNNER_NAME=ci-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-${{ github.run_id }}
 
   # Delete GitHub Self-hosted Runner from Azure
   delete_self_hosted_runner:
@@ -127,4 +124,4 @@ jobs:
     # Delete Runner
     - name: Delete Runner
       run: |
-        az container delete -g rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app -n ci-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-${{env.instance}}-${{ github.run_id }} --yes
+        az container delete -g rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app -n ci-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-${{ github.run_id }} --yes

@@ -26,9 +26,6 @@ param certificate string
 ])
 param env string
 
-@description('The instance identifier.')
-param instance string
-
 @description('The name of the existing Azure Key Vault.')
 param keyVaultName string
 
@@ -49,28 +46,28 @@ param workload string
 
 // Global Variables
 //////////////////////////////////////////////////
-var applicationGatewayName = 'appgw-${workload}-${env}-${azureRegion}-${instance}'
-var applicationGatewayPublicIpAddressName = 'pip-${workload}-${env}-${azureRegion}-${instance}'
+var applicationGatewayName = 'appgw-${workload}-${env}-${azureRegion}'
+var applicationGatewayPublicIpAddressName = 'pip-${workload}-${env}-${azureRegion}'
 var applicationGatewaySubnetName = 'snet-${workload}-${env}-${azureRegion}-applicationGateway'
 var applicationGatewaySubnetPrefix = '10.0.0.0/24'
-var applicationInsightsName = 'appinsights-${workload}-${env}-${azureRegion}-${instance}'
-var appServiceFqdn = replace('app-${workload}-${env}-${azureRegion}-${instance}.azurewebsites.net', '-', '')
+var applicationInsightsName = 'appinsights-${workload}-${env}-${azureRegion}'
+var appServiceFqdn = replace('app-${workload}-${env}-${azureRegion}.azurewebsites.net', '-', '')
 var appServiceHostName = 'hdsr.${rootDomainName}'
-var appServiceName = replace('app-${workload}-${env}-${azureRegion}-${instance}', '-', '')
-var appServicePlanName = 'plan-${workload}-${env}-${azureRegion}-${instance}'
+var appServiceName = replace('app-${workload}-${env}-${azureRegion}', '-', '')
+var appServicePlanName = 'plan-${workload}-${env}-${azureRegion}'
 var appServicePrivateDnsZoneName = 'privatelink.azurewebsites.net'
 var appServicePrivateEndpointName = 'pl-${workload}-${env}-${azureRegion}-appService'
 var azureSQLprivateDnsZoneName = 'privatelink${environment().suffixes.sqlServerHostname}'
 var containerInstanceSubnetName = 'snet-${workload}-${env}-${azureRegion}-containerInstance'
 var containerInstanceSubnetPrefix = '10.0.30.0/24'
-var logAnalyticsWorkspaceName = 'log-${workload}-${env}-${azureRegion}-${instance}'
+var logAnalyticsWorkspaceName = 'log-${workload}-${env}-${azureRegion}'
 var privateEndpointSubnetName = 'snet-${workload}-${env}-${azureRegion}-privateEndpoint'
 var privateEndpointSubnetPrefix = '10.0.10.0/24'
-var sqlDatabaseName = 'sqldb-${workload}-${env}-${azureRegion}-${instance}'
-var sqlServerName = 'sql-${workload}-${env}-${azureRegion}-${instance}'
+var sqlDatabaseName = 'sqldb-${workload}-${env}-${azureRegion}'
+var sqlServerName = 'sql-${workload}-${env}-${azureRegion}'
 var sslCertificateDataPassword = ''
 var sqlServerPrivateEndpointName = 'pl-${workload}-${env}-${azureRegion}-sqlServer'
-var virtualNetworkName = 'vnet-${workload}-${env}-${azureRegion}-${instance}'
+var virtualNetworkName = 'vnet-${workload}-${env}-${azureRegion}'
 var virtualnetworkPrefix = '10.0.0.0/16'
 var vnetIntegrationSubnetName = 'snet-${workload}-${env}-${azureRegion}-vnetintegration'
 var vnetIntegrationSubnetPrefix = '10.0.20.0/24'
