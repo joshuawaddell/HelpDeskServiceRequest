@@ -47,8 +47,6 @@ env:
 
     dotnet-version: '6.0'
 
-    labels: self-hosted, Linux, X64
-
 # Jobs
 jobs:
   # Deploy Infrastructure to Azure
@@ -110,7 +108,7 @@ jobs:
             RUNNER_REPOSITORY_URL=https://github.com/${{ github.repository }} \
             GITHUB_TOKEN=${{ secrets.PAT }} \
             RUNNER_OPTIONS="--ephemeral" \
-            RUNNER_LABELS=${{ env.labels }}
+            RUNNER_LABELS=uniqueString
             RUNNER_NAME=ci-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-${{ github.run_id }}
 
   # Deploy Application
