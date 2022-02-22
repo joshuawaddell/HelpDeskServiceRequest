@@ -45,6 +45,8 @@ env:
     # The name of the application workload.
     workload: cop2940    
 
+    dotnet-version: '6.0'
+
 # Jobs
 jobs:
   # Deploy Infrastructure to Azure
@@ -69,16 +71,16 @@ jobs:
       with:
         azcliversion: 2.33.1
         inlineScript: |
-          az group create -n rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app -l ${{env.azureRegion}}
+          az group create -n rg-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-app -l ${{ env.azureRegion }}
     
     # Deploy Bicep File
     - name: Deploy Bicep File
       uses: azure/arm-deploy@v1
       with:
         deploymentName: ${{ github.run_id }}
-        resourceGroupName: rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app
+        resourceGroupName: rg-${{ env.workload }}-${{ env.en v}}-${{ env.azureRegion }}-app
         template: ./infrastructure/main.bicep
-        parameters: adminPassword=${{env.adminPassword}} adminUserName=${{env.adminUserName}} applicationGatewayManagedIdentityName=${{env.applicationGatewayManagedIdentityName}} applicationGatewayManagedIdentityResourceGroupName=${{env.applicationGatewayManagedIdentityResourceGroupName}} azureRegion=${{env.azureRegion}} certificate=${{env.certificate}} env=${{env.env}}  keyVaultName=${{env.keyVaultName}} keyVaultResourceGroupName=${{env.keyVaultResourceGroupName}} rootDomainName=${{env.rootDomainName}} sslCertificateName=${{env.sslCertificateName}} workload=${{env.workload}}
+        parameters: adminPassword=${{ env.adminPassword }} adminUserName=${{ env.adminUserName }} applicationGatewayManagedIdentityName=${{ env.applicationGatewayManagedIdentityName }} applicationGatewayManagedIdentityResourceGroupName=${{ env.applicationGatewayManagedIdentityResourceGroupName }} azureRegion=${{ env.azureRegion }} certificate=${{ env.certificate }} env=${{ env.env }}  keyVaultName=${{ env.keyVaultName }} keyVaultResourceGroupName=${{ env.keyVaultResourceGroupName }} rootDomainName=${{ env.rootDomainName }} sslCertificateName=${{ env.sslCertificateName }} workload=${{ env.workload }}
 
   # Deploy GitHub Self-hosted Runner to Azure
   deploy_self_hosted_runner:
@@ -97,16 +99,46 @@ jobs:
     - name: Create Runner
       run: |
         az container create \
-          -g rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app \
-          -n ci-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-${{ github.run_id }} \
+          -g rg-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-app \
+          -n ci-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-${{ github.run_id }} \
           --image ${{ env.runner_image }} \
           --restart-policy Never \
-          --subnet /subscriptions/${{ secrets.SUBSCRIPTION_ID }}/resourceGroups/rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app/providers/Microsoft.Network/virtualNetworks/vnet-${{env.workload}}-${{env.env}}-${{env.azureRegion}}/subnets/snet-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-containerInstance \
+          --subnet /subscriptions/${{ secrets.SUBSCRIPTION_ID }}/resourceGroups/rg-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-app/providers/Microsoft.Network/virtualNetworks/vnet-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}/subnets/snet-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-containerInstance \
           --environment-variables \
             RUNNER_REPOSITORY_URL=https://github.com/${{ github.repository }} \
             GITHUB_TOKEN=${{ secrets.PAT }} \
             RUNNER_OPTIONS="--ephemeral" \
-            RUNNER_NAME=ci-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-${{ github.run_id }}
+            RUNNER_NAME=ci-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-${{ github.run_id }}
+
+  # Deploy Application
+  deploy_application:
+    needs: deploy_self_hosted_runner
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    steps:
+
+    # Checkout Code
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    # Setup .NET SDK Core
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ env.dotnet-version }}
+
+    # Run .NET Build and Publish
+    - name: Run .NET Build and Publish
+      run: |
+        dotnet build --configuration Release
+        dotnet publish -c Release -o ${{ env.workload }}
+
+    # Deploy Application to Azure App Service
+    - name: Deploy Application to Azure App Service
+      uses: azure/webapps-deploy@v2
+      with:
+        appServiceName: app${{ env.workload }}${{ env.env }}${{ env.azureRegion }}
+        package: 'https://github.com/${{ github.repository }}/application'
 
   # Delete GitHub Self-hosted Runner from Azure
   delete_self_hosted_runner:
@@ -124,4 +156,4 @@ jobs:
     # Delete Runner
     - name: Delete Runner
       run: |
-        az container delete -g rg-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-app -n ci-${{env.workload}}-${{env.env}}-${{env.azureRegion}}-${{ github.run_id }} --yes
+        az container delete -g rg-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-app -n ci-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-${{ github.run_id }} --yes
