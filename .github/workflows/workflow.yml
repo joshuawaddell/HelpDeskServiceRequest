@@ -145,7 +145,7 @@ jobs:
 
   # Delete GitHub Self-hosted Runner from Azure
   delete_self_hosted_runner:
-    needs: deploy_self_hosted_runner
+    needs: deploy_application
     name: Delete Self-Hosted Runner
     runs-on: ubuntu-latest
     steps:
