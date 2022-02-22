@@ -47,6 +47,8 @@ env:
 
     dotnet-version: '6.0'
 
+    labels: self-hosted, uniqueString
+
 # Jobs
 jobs:
   # Deploy Infrastructure to Azure
@@ -108,18 +110,22 @@ jobs:
             RUNNER_REPOSITORY_URL=https://github.com/${{ github.repository }} \
             GITHUB_TOKEN=${{ secrets.PAT }} \
             RUNNER_OPTIONS="--ephemeral" \
+            RUNNER_LABES=${{ env.labels }}
             RUNNER_NAME=ci-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-${{ github.run_id }}
 
   # Deploy Application
   deploy_application:
     needs: deploy_self_hosted_runner
     name: Deploy Application
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, uniqueString ]
     steps:
 
     # Checkout Code
     - name: Checkout Code
-      uses: actions/checkout@v2
+    - uses: actions/checkout@main
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
     # Setup .NET SDK Core
     - name: Setup .NET Core
@@ -131,7 +137,7 @@ jobs:
     - name: Run .NET Build and Publish
       run: |
         dotnet build --configuration Release
-        dotnet publish -c Release -o ${{ env.workload }}
+        dotnet publish -c Release -o 'https://github.com/${{ github.repository }}/application'
 
     # Deploy Application to Azure App Service
     - name: Deploy Application to Azure App Service
