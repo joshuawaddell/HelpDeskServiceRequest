@@ -47,7 +47,7 @@ env:
 
     dotnet-version: '6.0'
 
-    labels: self-hosted, uniqueString
+    labels: self-hosted, Linux, X64
 
 # Jobs
 jobs:
@@ -110,7 +110,7 @@ jobs:
             RUNNER_REPOSITORY_URL=https://github.com/${{ github.repository }} \
             GITHUB_TOKEN=${{ secrets.PAT }} \
             RUNNER_OPTIONS="--ephemeral" \
-            RUNNER_LABES=${{ env.labels }}
+            RUNNER_LABELS=${{ env.labels }}
             RUNNER_NAME=ci-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-${{ github.run_id }}
 
   # Deploy Application
