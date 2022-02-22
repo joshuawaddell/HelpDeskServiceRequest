@@ -88,6 +88,14 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
         name: containerInstanceSubnetName
         properties: {
           addressPrefix: containerInstanceSubnetPrefix
+          delegations: [
+            {
+              name: 'containerInstanceDelegation'
+              properties: {
+                serviceName: 'Microsoft.ContainerInstance/containerGroups'
+              }
+            }
+          ]
         }
       }
     ]
