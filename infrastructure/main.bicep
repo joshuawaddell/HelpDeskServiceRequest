@@ -19,11 +19,6 @@ param azureRegion string
 param certificate string
 
 @description('The environment name.')
-@allowed([
-  'prod'
-  'dev'
-  'test'
-])
 param env string
 
 @description('The name of the existing Azure Key Vault.')
