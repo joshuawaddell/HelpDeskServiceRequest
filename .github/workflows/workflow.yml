@@ -101,7 +101,7 @@ jobs:
 
     # Restore Dependencies
     - name: Restore Dependencies
-      run: dotnet Restore
+      run: dotnet restore
 
     # Build
     - name: Build
