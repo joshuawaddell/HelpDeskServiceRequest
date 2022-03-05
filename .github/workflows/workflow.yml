@@ -102,18 +102,22 @@ jobs:
     # Restore Dependencies
     - name: Restore Dependencies
       run: dotnet restore
+      working-directory: application
 
     # Build
     - name: Build
       run: dotnet build --no-restore
+      working-directory: application
 
     # Test
     - name: Test
       run: dotnet test --no-build --verbosity normal
+      working-directory: application
 
     # Publish
     - name: Publish
       run: dotnet publish HelpDeskServiceRequest/HelpDeskServiceRequest.csproj -c Release -o website
+      working-directory: application
 
     # Upload a Build Artifact
     - name: Upload a Build Artifact
