@@ -61,11 +61,6 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
         name: applicationGatewaySubnetName
         properties: {
           addressPrefix: applicationGatewaySubnetPrefix
-          serviceEndpoints: [
-            {
-              service: 'Microsoft.Web'
-            }
-          ]
         }
       }
       {

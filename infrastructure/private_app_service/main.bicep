@@ -50,6 +50,8 @@ var appServiceFqdn = replace('app-${workload}-${env}-${azureRegion}.azurewebsite
 var appServiceHostName = 'hdsr.${rootDomainName}'
 var appServiceName = replace('app-${workload}-${env}-${azureRegion}', '-', '')
 var appServicePlanName = 'plan-${workload}-${env}-${azureRegion}'
+var appServicePrivateDnsZoneName = 'privatelink.azurewebsites.net'
+var appServicePrivateEndpointName = 'pl-${workload}-${env}-${azureRegion}-appService'
 var azureSQLprivateDnsZoneName = 'privatelink${environment().suffixes.sqlServerHostname}'
 var containerInstanceSubnetName = 'snet-${workload}-${env}-${azureRegion}-containerInstance'
 var containerInstanceSubnetPrefix = '10.0.30.0/24'
@@ -125,6 +127,7 @@ module virtualNetworkModule './virtual_network.bicep' = {
 module privateDnsModule './private_dns_zone.bicep' = {
   name: 'privateDnsDeployment'
   params: {
+    appServicePrivateDnsZoneName: appServicePrivateDnsZoneName
     azureSQLPrivateDnsZoneName: azureSQLprivateDnsZoneName
     virtualNetworkId: virtualNetworkModule.outputs.virtualNetworkId
     virtualNetworkName: virtualNetworkName
@@ -169,8 +172,11 @@ module appServiceModule './app_service.bicep' = {
     applicationInsightsInstrumentationKey: applicationInsightsModule.outputs.applicationInsightsInstrumentationKey    
     appServiceName: appServiceName
     appServicePlanId: appServicePlanModule.outputs.appServicePlanId
+    appServicePrivateDnsZoneId: privateDnsModule.outputs.appServicePrivateDnsZoneId
+    appServicePrivateEndpointName: appServicePrivateEndpointName
     location: location
     logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
+    privateEndpointSubnetId: virtualNetworkModule.outputs.privateEndpointSubnetId
     sqlDatabaseName: sqlDatabaseName
     sqlServerFQDN: sqlModule.outputs.sqlServerFQDN
     vnetIntegrationSubnetId: virtualNetworkModule.outputs.vnetIntegrationSubnetId

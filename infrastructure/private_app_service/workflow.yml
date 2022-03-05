@@ -2,7 +2,7 @@
 name: deploy-workload
 
 # Triggers
-on: [ workflow_dispatch ]
+on: [workflow_dispatch]
 
 # Variables
 env:
@@ -82,60 +82,12 @@ jobs:
         template: ./infrastructure/main.bicep
         parameters: adminPassword=${{ env.adminPassword }} adminUserName=${{ env.adminUserName }} applicationGatewayManagedIdentityName=${{ env.applicationGatewayManagedIdentityName }} applicationGatewayManagedIdentityResourceGroupName=${{ env.applicationGatewayManagedIdentityResourceGroupName }} azureRegion=${{ env.azureRegion }} certificate=${{ env.certificate }} env=${{ env.env }}  keyVaultName=${{ env.keyVaultName }} keyVaultResourceGroupName=${{ env.keyVaultResourceGroupName }} rootDomainName=${{ env.rootDomainName }} sslCertificateName=${{ env.sslCertificateName }} workload=${{ env.workload }}
 
-  # Build Application
-  build_application:
+  # Deploy GitHub Self-hosted Runner to Azure
+  deploy_self_hosted_runner:
     needs: deploy_infrastructure
-    name: Build Application
+    name: Deploy Self-Hosted Runner   
     runs-on: ubuntu-latest
     steps:
-
-    # Checkout Code
-    - name: Checkout Code
-      uses: actions/checkout@v2
-
-    # Setup .NET
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: ${{ env.dotnet-version }}
-
-    # Restore Dependencies
-    - name: Restore Dependencies
-      run: dotnet Restore
-
-    # Build
-    - name: Build
-      run: dotnet build --no-restsore
-
-    # Test
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
-
-    # Publish
-    - name: Publish
-      run: dotnet publish HelpDeskServiceRequest/HelpDeskServiceRequest.csproj -c Release -o website
-
-    # Upload a Build Artifact
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2.2.2
-      with:
-        name: website
-        path: HelpDeskServiceRequest/website/**
-        if-no-files-found: error
-
-  # Deploy Application
-  deploy_application:
-    needs: build_application
-    name: Deploy Application
-    runs-on: ubuntu-latest
-    steps:
-
-    # Download a Build Artifact
-    - name: Download a Build Artifact
-      uses: actions/download-artifact@v2.0.8
-      with:
-        name: website
-        path: website
 
     # Login to Azure
     - name: Login to Azure
@@ -143,9 +95,68 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    # Create Runner
+    - name: Create Runner
+      run: |
+        az container create \
+          -g rg-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-app \
+          -n ci-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-${{ github.run_id }} \
+          --image ${{ env.runner_image }} \
+          --restart-policy Never \
+          --subnet /subscriptions/${{ secrets.SUBSCRIPTION_ID }}/resourceGroups/rg-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-app/providers/Microsoft.Network/virtualNetworks/vnet-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}/subnets/snet-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-containerInstance \
+          --environment-variables \
+            RUNNER_REPOSITORY_URL=https://github.com/${{ github.repository }} \
+            GITHUB_TOKEN=${{ secrets.PAT }} \
+            RUNNER_OPTIONS="--ephemeral" \
+            RUNNER_LABELS=uniqueString
+            RUNNER_NAME=ci-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-${{ github.run_id }}
+
+  # Deploy Application
+  deploy_application:
+    needs: deploy_self_hosted_runner
+    name: Deploy Application
+    runs-on: [ self-hosted, uniqueString ]
+    steps:
+
+    # Checkout Code
+    - uses: actions/checkout@main
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # Setup .NET SDK Core
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ env.dotnet-version }}
+
+    # Run .NET Build and Publish
+    - name: Run .NET Build and Publish
+      run: |
+        dotnet build --configuration Release
+        dotnet publish -c Release -o 'https://github.com/${{ github.repository }}/application'
+
     # Deploy Application to Azure App Service
     - name: Deploy Application to Azure App Service
       uses: azure/webapps-deploy@v2
       with:
         appServiceName: app${{ env.workload }}${{ env.env }}${{ env.azureRegion }}
-        package: website
+        package: 'https://github.com/${{ github.repository }}/application'
+
+  # Delete GitHub Self-hosted Runner from Azure
+  delete_self_hosted_runner:
+    needs: deploy_application
+    name: Delete Self-Hosted Runner
+    runs-on: ubuntu-latest
+    steps:
+
+    # Login to Azure
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # Delete Runner
+    - name: Delete Runner
+      run: |
+        az container delete -g rg-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-app -n ci-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-${{ github.run_id }} --yes

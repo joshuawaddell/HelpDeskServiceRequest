@@ -19,11 +19,20 @@ param appServiceName string
 @description('The resource ID of the App Service Plan.')
 param appServicePlanId string
 
+@description('The resource ID of the App Service Private Dns Zone.')
+param appServicePrivateDnsZoneId string
+
+@description('The name of the App Service Private Endpoint.')
+param appServicePrivateEndpointName string
+
 @description('The location for all resources.')
 param location string
 
 @description('The resource ID of the Log Analytics Workspace.')
 param logAnalyticsWorkspaceId string
+
+@description('The resource ID of the Private Endpoint Subnet.')
+param privateEndpointSubnetId string
 
 @description('The name of the Sql Database.')
 param sqlDatabaseName string
@@ -159,6 +168,45 @@ resource appServiceDiagnostics 'Microsoft.insights/diagnosticSettings@2021-05-01
       {
         category: 'AllMetrics'
         enabled: true
+      }
+    ]
+  }
+}
+
+// Resource - Private Endpoint - App service
+//////////////////////////////////////////////////
+resource appServicePrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01' = {
+  name: appServicePrivateEndpointName
+  location: location
+  properties: {
+    subnet: {
+      id: privateEndpointSubnetId
+    }
+    privateLinkServiceConnections: [
+      {
+        name: appServicePrivateEndpointName
+        properties: {
+          privateLinkServiceId: appService.id
+          groupIds: [
+            'sites'
+          ]
+        }
+      }
+    ]
+  }
+}
+
+// Resource - Prviate Endpoint Dns Group - Private Endpoint
+//////////////////////////////////////////////////
+resource appServicePrivateEndpointDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-06-01' = {
+  name: '${appServicePrivateEndpoint.name}/dnsgroupname'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'config1'
+        properties: {
+          privateDnsZoneId: appServicePrivateDnsZoneId
+        }
       }
     ]
   }
