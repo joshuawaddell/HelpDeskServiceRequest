@@ -1,0 +1,142 @@
+# Workflow name
+name: deploy-workload
+
+# Triggers
+on: [ workflow_dispatch ]
+
+# Variables
+env:
+    # The name of the existing Key Vault Secret for the admin password.
+    adminPassword: adminPassword
+    
+    # The name of the admin user.
+    adminUserName: hdsradmin
+
+    # The name of the existing Application Gateway Managed Identity.
+    applicationGatewayManagedIdentityName: id-cop2940-test-eastus-applicationGateway
+
+    # The name of the existing Application Gateway Managed Identity Resource Group.
+    applicationGatewayManagedIdentityResourceGroupName: rg-cop2940-test-eastus-core
+
+    # The selected Azure region for deployment (e.g. 'eastus' for East US).
+    azureRegion: eastus
+
+    # The name of the existing Key Vault Secret for the certificate.
+    certificate: certificate
+
+    # The The environment name (prod, dev, test).
+    env: test
+
+    # The name of the existing Azure Key Vault.
+    keyVaultName: kv-cop2940-test-eastus
+
+    # The name of the existing Azure Key Vault Resource Group.
+    keyVaultResourceGroupName: rg-cop2940-test-eastus-core
+
+    # The value for Root Domain Name.
+    rootDomainName: joshuawaddell.cloud
+
+    # The name of the SSL Certificate.
+    sslCertificateName: joshuawaddell.cloud
+
+    # The name of the application workload.
+    workload: cop2940    
+
+    # The version of .NET
+    dotnet-version: '6.0'
+
+# Jobs
+jobs:
+  # Deploy Infrastructure to Azure
+  deploy_infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    steps:
+    
+    # Checkout Code
+    - name: Checkout Code
+      uses: actions/checkout@v2
+    
+    # Login to Azure
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # Create Resource Group
+    - name: Create Resource Group
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.33.1
+        inlineScript: |
+          az group create -n rg-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-app -l ${{ env.azureRegion }}
+    
+    # Deploy Bicep File
+    - name: Deploy Bicep File
+      uses: azure/arm-deploy@v1
+      with:
+        deploymentName: ${{ github.run_id }}
+        resourceGroupName: rg-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-app
+        template: ./infrastructure/main.bicep
+        parameters: adminPassword=${{ env.adminPassword }} adminUserName=${{ env.adminUserName }} applicationGatewayManagedIdentityName=${{ env.applicationGatewayManagedIdentityName }} applicationGatewayManagedIdentityResourceGroupName=${{ env.applicationGatewayManagedIdentityResourceGroupName }} azureRegion=${{ env.azureRegion }} certificate=${{ env.certificate }} env=${{ env.env }}  keyVaultName=${{ env.keyVaultName }} keyVaultResourceGroupName=${{ env.keyVaultResourceGroupName }} rootDomainName=${{ env.rootDomainName }} sslCertificateName=${{ env.sslCertificateName }} workload=${{ env.workload }}
+
+  # Build Application
+  build_application:
+    needs: deploy_infrastructure
+    name: Build Application
+    runs-on: ubuntu-latest
+    steps:
+
+    # Checkout Code
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    # Setup .NET
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ env.dotnet-version }}
+        include-prerelease: true
+
+    # Build
+    - name: Build
+      run: dotnet build --configuration Release
+
+    # Publish
+    - name: Publish
+      run: dotnet publish HelpDeskServiceRequest/HelpDeskServiceRequest.csproj -c Release -o website
+
+    # Upload a Build Artifact
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.2.2
+      with:
+        name: website
+        path: /home/runner/work/cop2940/cop2940/website/
+        if-no-files-found: error
+
+  # Deploy Application
+  deploy_application:
+    needs: build_application
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    steps:
+
+    # Download a Build Artifact
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v2.0.8
+      with:
+        name: website
+        path: website
+
+    # Login to Azure
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # Deploy Application to Azure App Service
+    - name: Deploy Application to Azure App Service
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: app${{ env.workload }}${{ env.env }}${{ env.azureRegion }}
+        package: website
