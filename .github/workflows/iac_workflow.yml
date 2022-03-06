@@ -76,3 +76,7 @@ jobs:
         resourceGroupName: rg-${{ env.workload }}-${{ env.env }}-${{ env.azureRegion }}-app
         template: ./infrastructure/main.bicep
         parameters: adminPassword=${{ env.adminPassword }} adminUserName=${{ env.adminUserName }} applicationGatewayManagedIdentityName=${{ env.applicationGatewayManagedIdentityName }} applicationGatewayManagedIdentityResourceGroupName=${{ env.applicationGatewayManagedIdentityResourceGroupName }} azureRegion=${{ env.azureRegion }} certificate=${{ env.certificate }} env=${{ env.env }}  keyVaultName=${{ env.keyVaultName }} keyVaultResourceGroupName=${{ env.keyVaultResourceGroupName }} rootDomainName=${{ env.rootDomainName }} sslCertificateName=${{ env.sslCertificateName }} workload=${{ env.workload }}
+
+    # Logout of Azure
+    - name: Logout of Azure
+      run: az logout

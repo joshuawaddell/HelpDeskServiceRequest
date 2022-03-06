@@ -1,21 +1,93 @@
+# Workflow name
 name: deploy-application
 
+# Triggers
 on: [ workflow_dispatch ]
 
+# Variables
+env:
+    # The selected Azure region for deployment (e.g. 'eastus' for East US).
+    azureRegion: eastus
+    
+    # The version of .NET
+    dotnet-version: '6.0'
+
+    # The The environment name (prod, dev, test).
+    env: test
+
+    # The name of the application workload.
+    workload: cop2940  
+
+# Jobs
 jobs:
-  build:
-
+  # Build Application
+  build_application:
+    name: Build Application
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
+
+    # Checkout Code
+    - name: Checkout Code
+      uses: actions/checkout@v2
+
+    # Setup .NET
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.x
-    - name: Restore dependencies
+        dotnet-version: ${{ env.dotnet-version }}
+
+    # Restore Dependencies
+    - name: Restore Dependencies
       run: dotnet restore
+
+    # Build
     - name: Build
       run: dotnet build --no-restore
+
+    # Test
     - name: Test
       run: dotnet test --no-build --verbosity normal
+
+    # Publish
+    - name: Publish
+      run: dotnet publish HelpDeskServiceRequest/HelpDeskServiceRequest.csproj -c Release -o website
+
+    # Upload a Build Artifact
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.2.2
+      with:
+        name: website
+        path: HelpDeskServiceRequest/website/**
+        if-no-files-found: error
+
+  # Deploy Application
+  deploy_application:
+    needs: build
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    steps:
+
+    # Download a Build Artifact
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v2.0.8
+      with:
+        name: website
+        path: website
+
+    # Login to Azure
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # Deploy Application to Azure App Service
+    - name: Deploy Application to Azure App Service
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: app${{ env.workload }}${{ env.env }}${{ env.azureRegion }}
+        slot-name: production
+        package: website
+
+    # Logout of Azure
+    - name: Logout of Azure
+      run: az logout
