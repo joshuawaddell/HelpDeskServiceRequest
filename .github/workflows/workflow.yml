@@ -36,9 +36,6 @@ env:
     # The value for Root Domain Name.
     rootDomainName: joshuawaddell.cloud
 
-    # The image location for the GitHub self-hosted runner.
-    runner_image: ghcr.io/colindembovsky/ubuntu-actions-runner:6d7a59dfa95ec094a5fa8292bad01158c374e3ad
-
     # The name of the SSL Certificate.
     sslCertificateName: joshuawaddell.cloud
 
