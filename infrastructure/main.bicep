@@ -30,6 +30,9 @@ param keyVaultResourceGroupName string
 @description('The location for all resources.')
 param location string = resourceGroup().location
 
+@description('The url of the repository.')
+param repoUrl string
+
 @description('The value for Root Domain Name.')
 param rootDomainName string
 
@@ -171,6 +174,7 @@ module appServiceModule './app_service.bicep' = {
     appServicePlanId: appServicePlanModule.outputs.appServicePlanId
     location: location
     logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
+    repoUrl: repoUrl
     sqlDatabaseName: sqlDatabaseName
     sqlServerFQDN: sqlModule.outputs.sqlServerFQDN
     vnetIntegrationSubnetId: virtualNetworkModule.outputs.vnetIntegrationSubnetId
