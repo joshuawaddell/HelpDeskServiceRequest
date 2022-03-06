@@ -50,7 +50,7 @@ jobs:
 
     # Publish
     - name: Publish
-      run: dotnet publish HelpDeskServiceRequest/HelpDeskServiceRequest.csproj -c Release -o website
+      run: dotnet publish HelpDeskServiceRequest/HelpDeskServiceRequest.csproj -c Release --self-contained --runtime linux-x64 -o website
 
     # Upload a Build Artifact
     - name: Upload a Build Artifact
