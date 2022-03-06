@@ -34,7 +34,7 @@ env:
     keyVaultResourceGroupName: rg-cop2940-test-eastus-core
 
     # The url of the repository.
-    repoUrl: https://github.com/${{ github.repository }}
+    repoUrl: https://github.com/joshuawaddell/cop2940
 
     # The value for Root Domain Name.
     rootDomainName: joshuawaddell.cloud
