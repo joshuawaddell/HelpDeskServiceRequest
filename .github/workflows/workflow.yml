@@ -147,5 +147,5 @@ jobs:
     - name: Deploy Application to Azure App Service
       uses: azure/webapps-deploy@v2
       with:
-        appServiceName: app${{ env.workload }}${{ env.env }}${{ env.azureRegion }}
+        app-name: app${{ env.workload }}${{ env.env }}${{ env.azureRegion }}
         package: website
