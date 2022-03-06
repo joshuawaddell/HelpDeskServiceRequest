@@ -54,10 +54,10 @@ jobs:
 
     # Upload a Build Artifact
     - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2.2.2
+      uses: actions/upload-artifact@v3
       with:
         name: website
-        path: HelpDeskServiceRequest/website/**
+        path: /home/runner/work/HelpDeskServiceRequest/HelpDeskServiceRequest/website/
         if-no-files-found: error
 
   # Deploy Application
