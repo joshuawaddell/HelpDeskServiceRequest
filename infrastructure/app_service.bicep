@@ -25,9 +25,6 @@ param location string
 @description('The resource ID of the Log Analytics Workspace.')
 param logAnalyticsWorkspaceId string
 
-@description('The url of the repository.')
-param repoUrl string
-
 @description('The name of the Sql Database.')
 param sqlDatabaseName string
 
@@ -118,17 +115,6 @@ resource appServiceNetworking 'Microsoft.Web/sites/config@2020-12-01' = {
   properties: {
     subnetResourceId: vnetIntegrationSubnetId
     swiftSupported: true
-  }
-}
-
-// Resource - App Service - Application Deployment
-//////////////////////////////////////////////////
-resource appServiceSourceControls 'Microsoft.Web/sites/sourcecontrols@2020-12-01' = {
-  name: '${appService.name}/web'
-  properties: {
-    repoUrl: repoUrl
-    branch: 'main'
-    isManualIntegration: true
   }
 }
 
