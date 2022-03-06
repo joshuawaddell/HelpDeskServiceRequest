@@ -20,6 +20,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2020-10-01' = {
   name: appServicePlanName
   location: location
   tags: tags
+  kind: 'linux'
   sku: {
     name: 'P1v3'
     tier: 'PremiumV3'

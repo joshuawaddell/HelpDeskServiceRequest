@@ -51,12 +51,11 @@ resource appService 'Microsoft.Web/sites@2020-12-01' = {
   name: appServiceName
   location: location
   tags: tags
-  kind: 'linux'
   properties: {
     serverFarmId: appServicePlanId
     httpsOnly: true
-
     siteConfig: {
+      linuxFxVersion: 'DOTNETCORE|LTS'
       appSettings: [
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
@@ -124,7 +123,7 @@ resource appServiceNetworking 'Microsoft.Web/sites/config@2020-12-01' = {
 
 // Resource - App Service - Application Deployment
 //////////////////////////////////////////////////
-resource appServiceDeployment 'Microsoft.Web/sites/sourcecontrols@2020-12-01' = {
+resource appServiceSourceControls 'Microsoft.Web/sites/sourcecontrols@2020-12-01' = {
   name: '${appService.name}/web'
   properties: {
     repoUrl: repoUrl
