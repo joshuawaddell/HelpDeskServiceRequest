@@ -62,7 +62,7 @@ jobs:
 
   # Deploy Application
   deploy_application:
-    needs: build
+    needs: build_application
     name: Deploy Application
     runs-on: ubuntu-latest
     steps:
