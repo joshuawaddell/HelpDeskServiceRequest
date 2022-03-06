@@ -48,6 +48,7 @@ resource appService 'Microsoft.Web/sites@2020-12-01' = {
   name: appServiceName
   location: location
   tags: tags
+  kind: 'linux'
   properties: {
     serverFarmId: appServicePlanId
     httpsOnly: true
