@@ -23,7 +23,6 @@ The application deployment uses two Azure Resource Groups (core and app). The 'c
 az group create -n rg-${workload}-${env}-${azureRegion}-core
 ```
 
-
 Key Vault
 
 User Assigned Managed Identity

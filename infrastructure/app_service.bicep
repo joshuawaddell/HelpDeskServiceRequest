@@ -67,16 +67,19 @@ resource appService 'Microsoft.Web/sites@2020-12-01' = {
           value: '~2'
         }
         {
-          name: 'DefaultSqlConnectionSqlConnectionString'
-          value: 'Data Source=tcp:${sqlServerFQDN},1433;Initial Catalog=${sqlDatabaseName};User Id=${adminUserName}@${sqlServerFQDN};Password=${adminPassword};'
-        }
-        {
           name: 'WEBSITE_VNET_ROUTE_ALL'
           value: '1'
         }
         {
           name: 'WEBSITE_DNS_SERVER'
           value: '168.63.129.16'
+        }
+      ]
+      connectionStrings: [
+        {
+          name: 'HelpDeskServiceRequestContext'
+          connectionString: 'Data Source=tcp:${sqlServerFQDN},1433;Initial Catalog=${sqlDatabaseName};User Id=${adminUserName}@${sqlServerFQDN};Password=${adminPassword};'
+          type: 'SQLAzure'
         }
       ]
     }
