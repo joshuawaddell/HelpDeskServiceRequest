@@ -52,7 +52,7 @@ resource appService 'Microsoft.Web/sites@2020-12-01' = {
     serverFarmId: appServicePlanId
     httpsOnly: true
     siteConfig: {
-      linuxFxVersion: 'DOTNETCORE|LTS'
+      linuxFxVersion: 'DOTNETCORE|6.0'
       appSettings: [
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
