@@ -1,32 +1,18 @@
-# HelpDeskServiceRequest
+# **HelpDeskServiceRequest**
 
 TODO: Insert text here...
 
+## **Prerequisites**
 
+To deploy the Help Desk Service Request application to Azure using GitHub Actions, it is necessary to complete some pre-requisites.
 
-## Prerequisites
+### **Certificate and Domain Name**
 
-To deploy the Help Desk Service Request application to Azure, it is necessary to complete some pre-requisites, both in Azure and in GitHub.
+To fullly deploy and secure the infrastructure and application code, a wildcard certificate in base64 encoded format and a registered domain name are required. There are instructions later in this document on converting an existing wildcard certificate from PFX format to base64 encoded format.
 
-Core
+### **Azure Setup**
 
-- Wildcard PFX Certificate
-
-Azure
-
-- Resource Groups
-- Azure Key Vault
-- Azure User Assigned Managed Identity
-- Azure App Registration (Service Principal)
-
-GitHub
-
-- Fork Repository
-- Configure Repository Secrets
-
-### Azure Setup
-
-#### Resource Groups
+#### **Resource Groups**
 
 The application deployment uses two Azure Resource Groups (core and app). The 'core' Resource Group is created prior to the deployment, and the 'app' Resource Group is created during the deployment. Prior to creating the 'core' Resource Group it is necessary to define a series of variables that will be used throughout the deployment. These variables are used to build resource names and are used in any AZ CLI script, PowerShell script, ARM Template, and YAML workflow to deploy the infrastructure and application. The following variables must be defined:
 
@@ -58,11 +44,11 @@ $resourceGroupName = 'rg-$workload-$env-$azureRegion-core'
 az group create -n $resourceGroupName -l $azureRegion
 ```
 
-#### Azure Key Vault
+#### **Azure Key Vault**
 
 The application deployment uses an Azure Key Vault to store two secrets. The first secret is for the admin password of any resources deployed, and the second secret is for the base64 encoded PFX certificate used by the Azure Application Gateway.
 
-##### Create the Azure Key Vault
+##### **Create the Azure Key Vault**
 
 To create the Azure Key Vault, open a terminal and run the following command using the appropriate variables:
 
@@ -88,7 +74,7 @@ $keyValutName = 'kv-$workload-$env-$azureRegion'
 az keyvault create -n $keyVaultName -g $resourceGroupName --enable-soft-delete true --retention-days 7 --enable-purge-protection true --enabled-for-deployment true --enabled-for-disk-encryption true --enabled-for-template-deployment true
 ```
 
-##### Create the Azure Key Vault Secret for the Admin Password
+##### **Create the Azure Key Vault Secret for the Admin Password**
 
 To create the Azure Key Vault Secret for the admin password, open a terminal and run the following command using the appropriate variables:
 
@@ -116,7 +102,7 @@ $secretValue = 'abc123!'
 az keyvault secret set -n $secretName --vault-name $keyVaultName --value $secretValue
 ```
 
-##### Create the Azure Key Vault Secret for the base64 Encoded PFX Certificate
+##### **Create the Azure Key Vault Secret for the base64 Encoded PFX Certificate**
 
 Before creating the Azure Key Vault Secret for the base64 encoded PFX certificate, it is necessary to convert an existing PFX certificate to base 64 using PowerShell.
 
@@ -166,11 +152,11 @@ $secretValue = 'abc123!'
 az keyvault secret set -n $secretName --vault-name $keyVaultName --value $secretValue
 ```
 
-#### Azure User Assigned Managed Identity
+#### **Azure User Assigned Managed Identity**
 
 The application deployment uses an Azure User Assigned Managed Identity to extract the wildcard certificate during the deployment of the Azure Application Gateway. This identity needs access rights over the secrets stored within the Azure Key Vault.
 
-##### Create the Azure User Assigned Managed Identity
+##### **Create the Azure User Assigned Managed Identity**
 
 To create the Azure User Assigned Managed Identity, open a terminal and run the following command using the appropriate variables:
 
@@ -196,7 +182,7 @@ $managedIdentityName = 'id-$workload-$env-$azureRegion'
 az identity create -n $managedIdentityName -g $resourceGroupName
 ```
 
-##### Assign the Azure User Assigned Managed Identity to an Azure Key Vault Access Policy
+##### **Assign the Azure User Assigned Managed Identity to an Azure Key Vault Access Policy**
 
 To assign the Azure User Assigned Managed Identity to an Azure Key Vault Access Policy, open a terminal and run the following command using the appropriate variables:
 
@@ -228,7 +214,7 @@ $managedIdentityPrincipalId=az identity show -g $resourceGroupName -n $managedId
 az keyvault set-policy -g $resourceGroupName -n $keyVaultName --object-id $managedIdentityPrincipalId--secret-permissions get
 ```
 
-#### Service Principal
+#### **Service Principal**
 
 To deploy the Azure infrastructure and the application code, a Service Principal, also known as an App Registration, needs to be created in  Azure Active Directory. The [`az ad sp create-for-rbac`](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) command is used to create the Service Principal with an appropriate role at the appropriate scope for deployment.
 
@@ -255,13 +241,10 @@ The output of the command will appear as follows:
 
 Copy and past the output in a safe location. The `clientId`, `clientSecret`, `subscriptionId`, and `tenantId` are needed for the GitHub repository.
 
-### GitHub Setup
+### **GitHub Setup**
 
-#### Fork the Repository
+#### **Fork the Repository**
 
 To deploy the Azure Infrastructure and Application Code using [GitHub Actions](https://docs.github.com/en/actions), it is necessary to [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the [HelpDeskServiceRequest](https://github.com/joshuawaddell/HelpDeskServiceRequest) repository.
 
-For instructions on how to fork a repository, visit:
-
-<https://docs.github.com/en/get-started/quickstart/fork-a-repo>
-
+For instructions on how to fork a repository, visit: <https://docs.github.com/en/get-started/quickstart/fork-a-repo>
