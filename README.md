@@ -28,19 +28,75 @@ The application deployment uses two Azure Resource Groups (core and app). The 'c
 - `env` - defines the name of the environment to be deployed to (e.g. `prod`, `dev`, or `test`)
 - `azureRegion` - defines the name of the Azure Region to be deployed to (e.g. `eastus`, `eastus2`)
 
-The 'core' Resource Group can be created in the Azure Portal, or using Azure CLI or Azure PowerShell. This guide focuses on using AZ CLI. To create the 'core' Resource Group, open a terminal and run the following command using the appropriate variables
+The 'core' Resource Group can be created in the Azure Portal, or using Azure CLI or Azure PowerShell. This guide focuses on using AZ CLI. 
+
+To create the 'core' Resource Group, open a terminal and run the following command using the appropriate variables:
 
 ```azcli
-az group create -n rg-${workload}-${env}-${azureRegion}-core -l ${azureRegion}
+$azureRegion = 'Name of the Azure Region'
+$resourceGroupName = "rg-${workload}-${env}-${azureRegion}-core"
+
+az group create -n $resourceGroupName -l $azureRegion
 ```
 
 For example:
 
 ```azcli
-az group create -n rg-hdsr-prod-eastus-core -l eastus
+$azureRegion = 'eastus'
+$resourceGroupName = "rg-hdsr-prod-eastus-core"
+
+az group create -n $resourceGroupName -l $azureRegion
 ```
 
-Key Vault
+#### Key Vault
+
+The application deployment uses an Azure Key Vault to store two secrets. The first secret is for the admin password of any resources deployed, and the second secret is for the base64 encoded PFX certificate used by the Azure Application Gateway.
+
+##### Create the Azure Key Vault
+
+To create the Azure Key Vault, open a terminal and run the following command using the appropriate variables:
+
+```azcli
+$azureRegion = 'Name of the Azure Region'
+$resourceGroupName = "rg-${workload}-${env}-${azureRegion}-core"
+$keyValutName = "kv-${workload}-${env}-${azureRegion}"
+
+az keyvault create -n $keyVaultName -g $resourceGroupName --enable-soft-delete true --retention-days 7 --enable-purge-protection true --enabled-for-deployment true --enabled-for-disk-encryption true --enabled-for-template-deployment true
+```
+
+For example:
+
+```azcli
+$azureRegion = 'eastus'
+$resourceGroupName = "rg-hdsr-prod-eastus-core"
+$keyValutName = "kv-hdsr-prod-eastus"
+
+az keyvault create -n $keyVaultName -g $resourceGroupName --enable-soft-delete true --retention-days 7 --enable-purge-protection true --enabled-for-deployment true --enabled-for-disk-encryption true --enabled-for-template-deployment true
+```
+
+##### Create the Azure Key Vault Secret for the Admin Password
+
+To create the Azure Key Vault Secret for the admin password, open a terminal and run the following command using the appropriate variables:
+
+```azcli
+$keyValutName = "kv-${workload}-${env}-${azureRegion}"
+$secretName = 'Name of Secret
+$secretValue = 'Value of Secret'
+
+az keyvault secret set -n $secretName --vault-name $keyVaultName --value $secretValue
+```
+
+For example:
+
+```azcli
+$keyValutName = "kv-hdsr-prod-eastus"
+$adminPassword = 'adminPassword'
+$secretValue = 'abc123!'
+
+az keyvault secret set -n $secretName --vault-name $keyVaultName --value $secretValue
+```
+
+##### Create the Azure Key Vault Secret for the base64 Encoded PFX Certificate
 
 User Assigned Managed Identity
 
