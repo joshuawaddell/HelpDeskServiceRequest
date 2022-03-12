@@ -57,7 +57,7 @@ $resourceGroupName = 'rg-$workload-$env-$azureRegion-core'
 az group create -n $resourceGroupName -l $azureRegion
 ```
 
-#### Key Vault
+#### Azure Key Vault
 
 The application deployment uses an Azure Key Vault to store two secrets. The first secret is for the admin password of any resources deployed, and the second secret is for the base64 encoded PFX certificate used by the Azure Application Gateway.
 
@@ -165,7 +165,67 @@ $secretValue = 'abc123!'
 az keyvault secret set -n $secretName --vault-name $keyVaultName --value $secretValue
 ```
 
-User Assigned Managed Identity
+#### Azure User Assigned Managed Identity
+
+The application deployment uses an Azure User Assigned Managed Identity to extract the wildcard certificate during the deployment of the Azure Application Gateway. This identity needs access rights over the secrets stored within the Azure Key Vault.
+
+##### Create the Azure User Assigned Managed Identity
+
+To create the Azure User Assigned Managed Identity, open a terminal and run the following command using the appropriate variables:
+
+```powershell
+$workload = 'Name of the workload'
+$env = 'Name of the environment'
+$azureRegion = 'Name of the Azure Region'
+$resourceGroupName = 'rg-$workload-$env-$azureRegion-core'
+$managedIdentityName = 'id-$workload-$env-$azureRegion'
+
+az identity create -n $managedIdentityName -g $resourceGroupName
+```
+
+For example:
+
+```powershell
+$workload = 'hdsr'
+$env = 'prod'
+$azureRegion = 'eastus'
+$resourceGroupName = 'rg-$workload-$env-$azureRegion-core'
+$managedIdentityName = 'id-$workload-$env-$azureRegion'
+
+az identity create -n $managedIdentityName -g $resourceGroupName
+```
+
+##### Assign the Azure User Assigned Managed Identity to an Azure Key Vault Access Policy
+
+To assign the Azure User Assigned Managed Identity to an Azure Key Vault Access Policy, open a terminal and run the following command using the appropriate variables:
+
+```powershell
+$workload = 'Name of the workload'
+$env = 'Name of the environment'
+$azureRegion = 'Name of the Azure Region'
+$resourceGroupName = 'rg-$workload-$env-$azureRegion-core'
+$keyValutName = 'kv-$workload-$env-$azureRegion'
+$managedIdentityName = 'id-$workload-$env-$azureRegion'
+
+$managedIdentityPrincipalId=az identity show -g $resourceGroupName -n $managedIdentityName --query principalId
+
+az keyvault set-policy -g $resourceGroupName -n $keyVaultName --object-id $managedIdentityPrincipalId--secret-permissions get
+```
+
+For example:
+
+```powershell
+$workload = 'hdsr'
+$env = 'prod'
+$azureRegion = 'eastus'
+$resourceGroupName = 'rg-$workload-$env-$azureRegion-core'
+$keyValutName = 'kv-$workload-$env-$azureRegion'
+$managedIdentityName = 'id-$workload-$env-$azureRegion'
+
+$managedIdentityPrincipalId=az identity show -g $resourceGroupName -n $managedIdentityName --query principalId
+
+az keyvault set-policy -g $resourceGroupName -n $keyVaultName --object-id $managedIdentityPrincipalId--secret-permissions get
+```
 
 #### Service Principal
 
