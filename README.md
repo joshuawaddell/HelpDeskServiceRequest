@@ -32,8 +32,8 @@ The 'core' Resource Group can be created in the Azure Portal, or using Azure CLI
 
 To create the 'core' Resource Group, open a terminal and run the following command using the appropriate variables:
 
-```azcli
-$azureRegion = 'Name of the Azure Region'
+```powershell
+$azureRegion = 'NAME OF THE AZURE REGION'
 $resourceGroupName = "rg-${workload}-${env}-${azureRegion}-core"
 
 az group create -n $resourceGroupName -l $azureRegion
@@ -41,7 +41,7 @@ az group create -n $resourceGroupName -l $azureRegion
 
 For example:
 
-```azcli
+```powershell
 $azureRegion = 'eastus'
 $resourceGroupName = "rg-hdsr-prod-eastus-core"
 
@@ -56,8 +56,8 @@ The application deployment uses an Azure Key Vault to store two secrets. The fir
 
 To create the Azure Key Vault, open a terminal and run the following command using the appropriate variables:
 
-```azcli
-$azureRegion = 'Name of the Azure Region'
+```powershell
+$azureRegion = 'NAME OF THE AZURE REGION'
 $resourceGroupName = "rg-${workload}-${env}-${azureRegion}-core"
 $keyValutName = "kv-${workload}-${env}-${azureRegion}"
 
@@ -66,7 +66,7 @@ az keyvault create -n $keyVaultName -g $resourceGroupName --enable-soft-delete t
 
 For example:
 
-```azcli
+```powershell
 $azureRegion = 'eastus'
 $resourceGroupName = "rg-hdsr-prod-eastus-core"
 $keyValutName = "kv-hdsr-prod-eastus"
@@ -77,6 +77,37 @@ az keyvault create -n $keyVaultName -g $resourceGroupName --enable-soft-delete t
 ##### Create the Azure Key Vault Secret for the Admin Password
 
 To create the Azure Key Vault Secret for the admin password, open a terminal and run the following command using the appropriate variables:
+
+```powershell
+$keyValutName = "kv-${workload}-${env}-${azureRegion}"
+$secretName = 'NAME OF SECRET'
+$secretValue = 'VALUE OF SECRET'
+
+az keyvault secret set -n $secretName --vault-name $keyVaultName --value $secretValue
+```
+
+For example:
+
+```powershell
+$keyValutName = "kv-hdsr-prod-eastus"
+$adminPassword = 'adminPassword'
+$secretValue = 'abc123!'
+
+az keyvault secret set -n $secretName --vault-name $keyVaultName --value $secretValue
+```
+
+##### Create the Azure Key Vault Secret for the base64 Encoded PFX Certificate
+
+Before creating the Azure Key Vault Secret for the base64 encoded PFX certificate, it is necessary to convert an existing PFX certificate to base 64 using PowerShell.
+
+To convert an existing PFX certificate to base 64, open a PowerShell terminal and run the following command using the appropriate variables:
+
+```powershell
+$fileContentBytes = get-content 'PATH TO YOUR PFX FILE' -Encoding Byte
+[System.Convert]::ToBase64String($fileContentBytes) | Out-File ‘pfx-encoded-bytes.txt’
+```
+
+To create the Azure Key Vault Secret for the base64 encoded PFX certificate, open a terminal and run the following command using the appropriate variables:
 
 ```azcli
 $keyValutName = "kv-${workload}-${env}-${azureRegion}"
@@ -90,13 +121,11 @@ For example:
 
 ```azcli
 $keyValutName = "kv-hdsr-prod-eastus"
-$adminPassword = 'adminPassword'
+$adminPassword = 'certificate'
 $secretValue = 'abc123!'
 
 az keyvault secret set -n $secretName --vault-name $keyVaultName --value $secretValue
 ```
-
-##### Create the Azure Key Vault Secret for the base64 Encoded PFX Certificate
 
 User Assigned Managed Identity
 
