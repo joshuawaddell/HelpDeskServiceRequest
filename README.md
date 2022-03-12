@@ -3,13 +3,13 @@
 TODO: Insert text here...
 
 
+
 ## Prerequisites
 
 To deploy the Help Desk Service Request application to Azure, it is necessary to complete some pre-requisites, both in Azure and in GitHub.
 
 Core
 
-- Domain Name
 - Wildcard PFX Certificate
 
 Azure
@@ -21,7 +21,8 @@ Azure
 
 GitHub
 
-- Repository Secrets
+- Fork Repository
+- Configure Repository Secrets
 
 ### Azure Setup
 
@@ -252,13 +253,15 @@ The output of the command will appear as follows:
 }
 ```
 
+Copy and past the output in a safe location. The `clientId`, `clientSecret`, `subscriptionId`, and `tenantId` are needed for the GitHub repository.
+
 ### GitHub Setup
 
-TODO: Insert text here...
+#### Fork the Repository
 
-## Todo
+To deploy the Azure Infrastructure and Application Code using [GitHub Actions](https://docs.github.com/en/actions), it is necessary to [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo) the [HelpDeskServiceRequest](https://github.com/joshuawaddell/HelpDeskServiceRequest) repository.
 
-- Documentation
-- GitHub Actions workflow for application deployment
-- Provide method to inject parameter values for workload, environment, and Azure region
-- Visio Diagram
+For instructions on how to fork a repository, visit:
+
+<https://docs.github.com/en/get-started/quickstart/fork-a-repo>
+
