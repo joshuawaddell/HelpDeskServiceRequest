@@ -7,6 +7,11 @@ TODO: Insert text here...
 
 To deploy the Help Desk Service Request application to Azure, it is necessary to complete some pre-requisites, both in Azure and in GitHub.
 
+Core
+
+- Domain Name
+- Wildcard PFX Certificate
+
 Azure
 
 - Resource Groups
@@ -34,7 +39,7 @@ To create the 'core' Resource Group, open a terminal and run the following comma
 
 ```powershell
 $azureRegion = 'NAME OF THE AZURE REGION'
-$resourceGroupName = "rg-${workload}-${env}-${azureRegion}-core"
+$resourceGroupName = 'rg-${workload}-${env}-${azureRegion}-core'
 
 az group create -n $resourceGroupName -l $azureRegion
 ```
@@ -43,7 +48,7 @@ For example:
 
 ```powershell
 $azureRegion = 'eastus'
-$resourceGroupName = "rg-hdsr-prod-eastus-core"
+$resourceGroupName = 'rg-hdsr-prod-eastus-core'
 
 az group create -n $resourceGroupName -l $azureRegion
 ```
@@ -58,8 +63,8 @@ To create the Azure Key Vault, open a terminal and run the following command usi
 
 ```powershell
 $azureRegion = 'NAME OF THE AZURE REGION'
-$resourceGroupName = "rg-${workload}-${env}-${azureRegion}-core"
-$keyValutName = "kv-${workload}-${env}-${azureRegion}"
+$resourceGroupName = 'rg-${workload}-${env}-${azureRegion}-core'
+$keyValutName = 'kv-${workload}-${env}-${azureRegion}'
 
 az keyvault create -n $keyVaultName -g $resourceGroupName --enable-soft-delete true --retention-days 7 --enable-purge-protection true --enabled-for-deployment true --enabled-for-disk-encryption true --enabled-for-template-deployment true
 ```
@@ -68,8 +73,8 @@ For example:
 
 ```powershell
 $azureRegion = 'eastus'
-$resourceGroupName = "rg-hdsr-prod-eastus-core"
-$keyValutName = "kv-hdsr-prod-eastus"
+$resourceGroupName = 'rg-hdsr-prod-eastus-core'
+$keyValutName = 'kv-hdsr-prod-eastus'
 
 az keyvault create -n $keyVaultName -g $resourceGroupName --enable-soft-delete true --retention-days 7 --enable-purge-protection true --enabled-for-deployment true --enabled-for-disk-encryption true --enabled-for-template-deployment true
 ```
@@ -79,7 +84,7 @@ az keyvault create -n $keyVaultName -g $resourceGroupName --enable-soft-delete t
 To create the Azure Key Vault Secret for the admin password, open a terminal and run the following command using the appropriate variables:
 
 ```powershell
-$keyValutName = "kv-${workload}-${env}-${azureRegion}"
+$keyValutName = 'kv-${workload}-${env}-${azureRegion}'
 $secretName = 'NAME OF SECRET'
 $secretValue = 'VALUE OF SECRET'
 
@@ -89,7 +94,7 @@ az keyvault secret set -n $secretName --vault-name $keyVaultName --value $secret
 For example:
 
 ```powershell
-$keyValutName = "kv-hdsr-prod-eastus"
+$keyValutName = 'kv-hdsr-prod-eastus'
 $adminPassword = 'adminPassword'
 $secretValue = 'abc123!'
 
@@ -104,13 +109,13 @@ To convert an existing PFX certificate to base 64, open a PowerShell terminal an
 
 ```powershell
 $fileContentBytes = get-content 'PATH TO YOUR PFX FILE' -Encoding Byte
-[System.Convert]::ToBase64String($fileContentBytes) | Out-File ‘pfx-encoded-bytes.txt’
+[System.Convert]::ToBase64String($fileContentBytes) | Out-File ‘PATH TO YOUR BASE64 FILE.txt’
 ```
 
 To create the Azure Key Vault Secret for the base64 encoded PFX certificate, open a terminal and run the following command using the appropriate variables:
 
-```azcli
-$keyValutName = "kv-${workload}-${env}-${azureRegion}"
+```powershell
+$keyValutName = 'kv-${workload}-${env}-${azureRegion}'
 $secretName = 'Name of Secret
 $secretValue = 'Value of Secret'
 
@@ -119,8 +124,8 @@ az keyvault secret set -n $secretName --vault-name $keyVaultName --value $secret
 
 For example:
 
-```azcli
-$keyValutName = "kv-hdsr-prod-eastus"
+```powershell
+$keyValutName = 'kv-hdsr-prod-eastus'
 $adminPassword = 'certificate'
 $secretValue = 'abc123!'
 
