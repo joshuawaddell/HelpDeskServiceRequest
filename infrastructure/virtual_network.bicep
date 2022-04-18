@@ -6,12 +6,6 @@ param applicationGatewaySubnetName string
 @description('The address prefix of the Application Gateway Subnet.')
 param applicationGatewaySubnetPrefix string
 
-@description('The name of the Container Instance Subnet.')
-param containerInstanceSubnetName string
-
-@description('The address prefix of the Container Instance Subnet.')
-param containerInstanceSubnetPrefix string
-
 @description('The location for all resources.')
 param location string
 
@@ -84,20 +78,6 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2020-07-01' = {
               name: 'appServicePlanDelegation'
               properties: {
                 serviceName: 'Microsoft.Web/serverFarms'
-              }
-            }
-          ]
-        }
-      }
-      {
-        name: containerInstanceSubnetName
-        properties: {
-          addressPrefix: containerInstanceSubnetPrefix
-          delegations: [
-            {
-              name: 'containerInstanceDelegation'
-              properties: {
-                serviceName: 'Microsoft.ContainerInstance/containerGroups'
               }
             }
           ]
