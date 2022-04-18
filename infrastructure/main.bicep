@@ -107,8 +107,6 @@ module virtualNetworkModule './virtual_network.bicep' = {
   params: {
     applicationGatewaySubnetName: applicationGatewaySubnetName
     applicationGatewaySubnetPrefix: applicationGatewaySubnetPrefix
-    containerInstanceSubnetName: containerInstanceSubnetName
-    containerInstanceSubnetPrefix: containerInstanceSubnetPrefix
     location: location
     logAnalyticsWorkspaceId: logAnalyticsModule.outputs.logAnalyticsWorkspaceId
     privateEndpointSubnetName: privateEndpointSubnetName
