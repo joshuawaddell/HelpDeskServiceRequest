@@ -16,7 +16,7 @@ To prepare the Azure environment for the infrastructure and application deployme
 
 1. Create the Resource Groups
 2. Create the Azure Key Vault and the necessary secrets
-3. Create the Azure User Assigned Managed Identity and assign it permissions to the Azure Key Vaul
+3. Create the Azure User Assigned Managed Identity and assign it permissions to the Azure Key Vault
 4. Create the Service Principal
 
 #### **Resource Groups**
